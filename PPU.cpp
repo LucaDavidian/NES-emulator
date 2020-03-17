@@ -157,7 +157,7 @@ void PPU::CopyAddressY()
 	}
 }
 
-void PPU::LoadShiftRegisters()
+void PPU::LoadBackgroundShiftRegisters()
 {
 	backgroundShiftRegisterLow = backgroundShiftRegisterLow & 0xFF00 | backgroundLow;
 	backgroundShiftRegisterHigh = backgroundShiftRegisterHigh & 0xFF00 | backgroundHigh;
@@ -169,7 +169,7 @@ void PPU::LoadShiftRegisters()
 	attributeLatchHigh = attribute & 0x02 ? 0xFF : 0x00;
 }
 
-void PPU::ShiftRegisters()
+void PPU::ShiftBackgroundRegisters()
 {
 	static uint8_t shifted;
 
@@ -177,9 +177,6 @@ void PPU::ShiftRegisters()
 	{
 		backgroundShiftRegisterLow <<= 1;
 		backgroundShiftRegisterHigh <<= 1;
-
-		//attributeShiftRegisterLow <<= 1;
-		//attributeShiftRegisterHigh <<= 1;
 
 		attributeShiftRegisterLow = attributeShiftRegisterLow << 1 | (attributeLatchLow & 0x80 >> shifted) >> 7 - shifted ;
 		attributeShiftRegisterHigh = attributeShiftRegisterHigh << 1 | (attributeLatchHigh & 0x80 >> shifted) >> 7 - shifted;
@@ -196,12 +193,12 @@ void PPU::Clock()
 		/**** background rendering ****/
 		if (cycle >= 1 && cycle <= 256 || cycle >= 321 && cycle <= 336)
 		{
-			ShiftRegisters();
+			ShiftBackgroundRegisters();
 
 			switch ((cycle - 1) % 8)
 			{
 				case 0:
-					LoadShiftRegisters();
+					LoadBackgroundShiftRegisters();
 					break;
 				case 1:     // fetch background tile id from nametable byte
 					tileID = Read(0x2000 | addressV.reg & 0x0FFF);
@@ -245,7 +242,7 @@ void PPU::Clock()
 		{
 			if (mask.bits.renderSprites)
 				for (int i = 0; i < numScanlineSprites; i++)
-					if (spriteXCounter[i])
+					if (spriteXCounter[i] + 1)  // visible pixels start at cycle 1
 						spriteXCounter[i]--;
 					else
 					{
@@ -410,12 +407,12 @@ void PPU::Clock()
 				status.bits.spriteZeroHit = 0;     // clear sprite 0 hit flag
 			}
 
-			ShiftRegisters();
+			ShiftBackgroundRegisters();
 
 			switch ((cycle - 1) % 8)
 			{
 				case 0:
-					LoadShiftRegisters();
+					LoadBackgroundShiftRegisters();
 					break;
 				case 1:     // fetch background tile id from nametable byte
 					tileID = Read(0x2000 | addressV.reg & 0x0FFF);
@@ -553,7 +550,7 @@ void PPU::Clock()
 	{
 		for (int i = 0; i < numScanlineSprites; i++)
 		{
-			if (spriteXCounter[i] == 0)
+			if (spriteXCounter[i] == -1)
 			{
 				spritePixel |= (spriteShiftRegisterLow[i] & 0x80) >> 7;
 				spritePixel |= (spriteShiftRegisterHigh[i] & 0x80) >> 6;

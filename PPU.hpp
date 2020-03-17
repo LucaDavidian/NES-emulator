@@ -131,8 +131,8 @@ private:
 	void IncrementAddressY();
 	void CopyAddressX();
 	void CopyAddressY();
-	void LoadShiftRegisters();
-	void ShiftRegisters();
+	void LoadBackgroundShiftRegisters();
+	void ShiftBackgroundRegisters();
 
 	uint8_t tileID;                              // fetched background tile
 	uint8_t attribute;                           // fetched background nametable byte
@@ -162,7 +162,7 @@ private:
 	uint8_t spriteShiftRegisterLow[8];
 	uint8_t spriteShiftRegisterHigh[8];
 	uint8_t spriteAttribute[8];
-	uint8_t spriteXCounter[8];
+	int8_t spriteXCounter[8];
 };
 
 #endif  // PPU_H
