@@ -1,0 +1,8 @@
+*.exe
+*.vcxproj*
+/x64
+/Debug
+/ROMs
+/fonts
+*.dll
+nestest.log
