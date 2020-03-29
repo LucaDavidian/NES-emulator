@@ -1,5 +1,10 @@
 #include "cartridge.hpp"
 #include "mapper.hpp"
+#include "mapper000.hpp"
+#include "mapper001.hpp"
+#include "mapper002.hpp"
+#include "mapper003.hpp"
+#include "mapper004.hpp"
 #include <fstream>
 #include <exception>
 
@@ -54,18 +59,19 @@ void Cartridge::LoadRom(const std::string &ROMFilePath)
     switch (mapperID)
     {
         case 0:
-            mapper = new Mapper0(nBanksPRG, nBanksCHR);
+            mapper = new Mapper000(nBanksPRG, nBanksCHR);
             break;
         case 1:
-            mapper = new Mapper1(nBanksPRG, nBanksCHR);
+            mapper = new Mapper001(nBanksPRG, nBanksCHR);
             break;
         case 2:
-            mapper = new Mapper2(nBanksPRG, nBanksCHR);
+            mapper = new Mapper002(nBanksPRG, nBanksCHR);
             break;
         case 3:
-            mapper = new Mapper3(nBanksPRG, nBanksCHR);
+            mapper = new Mapper003(nBanksPRG, nBanksCHR);
             break;
-        case 4:
+        case 4:                                                     // 2 * number of 16 KiB PRG banks -> number of 8 KiB PRG banks
+            mapper = new Mapper004(nBanksPRG * 2, nBanksCHR * 8);   // 8 * number of 8 KiB CHR banks -> number of 1 KiB CHR banks
             break;
         default:
             // error
@@ -119,4 +125,24 @@ void Cartridge::PPUWrite(uint16_t address, uint8_t data)  // PPU write 0x0000 - 
     uint32_t mappedAddress = mapper->MapWriteCHR(address);
 
     CHR_ROM[mappedAddress] = data;
+}
+
+bool Cartridge::InterruptAsserted()
+{
+    if (mapperID == 4)
+        return static_cast<Mapper004*>(mapper)->InterruptAsserted();
+    
+    return false;
+}
+
+void Cartridge::AcknowledgeInterrupt()
+{
+    if (mapperID == 4)
+        static_cast<Mapper004*>(mapper)->AcknowledgeInterrupt();
+}
+
+void Cartridge::CountPPUScanline()
+{
+    if (mapperID == 4)
+        static_cast<Mapper004*>(mapper)->CountPPUScanline();
 }

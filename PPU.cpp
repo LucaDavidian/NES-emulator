@@ -231,17 +231,17 @@ void PPU::Clock()
 		/******************** sprites rendering ********************/
 		if (cycle == 0)
 		{
-			numScanlineSprites = spriteCount;
-			spriteCount = 0;
+			spriteCountScanline = spriteCountNextScanline;
+			spriteCountNextScanline = 0;
 			OAMEntry = 0;
 			allSpritesEvaluated = false;
-			spriteZero = s0;
-			s0 = false;
+			spriteZeroOnScanline = spriteZeroNextScanline;
+			spriteZeroNextScanline = false;
 		}
 		else if (cycle >= 1 && cycle <= 256)
 		{
 			if (maskRegister.bits.renderSprites)
-				for (int i = 0; i < numScanlineSprites; i++)
+				for (int i = 0; i < spriteCountScanline; i++)
 					if (spriteXCounter[i] + 1)  // visible pixels start at cycle 1
 						spriteXCounter[i]--;
 					else
@@ -265,31 +265,31 @@ void PPU::Clock()
 					spriteY = OAM[OAMEntry].y;
 				else            // even PPU cycle
 				{
-					if (!allSpritesEvaluated && spriteCount <= 8)
+					if (!allSpritesEvaluated && spriteCountNextScanline <= 8)
 					{
 						int16_t difference = (int16_t)scanline - (int16_t)spriteY; 
 
-						if (spriteCount < 8)
+						if (spriteCountNextScanline < 8)
 						{
-							secondaryOAM[spriteCount].y = spriteY;
+							secondaryOAM[spriteCountNextScanline].y = spriteY;
 
 							if (difference >= 0 && difference < (controlRegister.bits.spriteSize ? 16 : 8))
 							{
-								secondaryOAM[spriteCount].tileID = OAM[OAMEntry].tileID;
-								secondaryOAM[spriteCount].attribute = OAM[OAMEntry].attribute;
-								secondaryOAM[spriteCount].x = OAM[OAMEntry].x;
+								secondaryOAM[spriteCountNextScanline].tileID = OAM[OAMEntry].tileID;
+								secondaryOAM[spriteCountNextScanline].attribute = OAM[OAMEntry].attribute;
+								secondaryOAM[spriteCountNextScanline].x = OAM[OAMEntry].x;
 
 								if (OAMEntry == 0)
-									s0 = true;
+									spriteZeroNextScanline = true;
 
-								spriteCount++;
+								spriteCountNextScanline++;
 							}
 						}
-						else if (spriteCount == 8)
+						else if (spriteCountNextScanline == 8)
 							if (difference >= 0 && difference < (controlRegister.bits.spriteSize ? 16 : 8))
 							{
 								statusRegister.bits.spriteOverflow = 1;
-								spriteCount++;
+								spriteCountNextScanline++;
 							}
 					}
 
@@ -551,7 +551,7 @@ void PPU::Clock()
 	
 	if (maskRegister.bits.renderSprites)
 	{
-		for (int i = 0; i < numScanlineSprites; i++)
+		for (int i = 0; i < spriteCountScanline; i++)
 		{
 			if (spriteXCounter[i] == -1)
 			{
@@ -565,7 +565,7 @@ void PPU::Clock()
 				
 				if (spritePixel != 0)  // if sprite pixel is opaque exit loop, else keep looking for other sprites
 				{
-					if (spriteZero && i == 0)
+					if (spriteZeroOnScanline && i == 0)
 						statusRegister.bits.spriteZeroHit = 1;
 
 					break;
@@ -590,6 +590,9 @@ void PPU::Clock()
 	screen->SetPixel(cycle - 1, scanline, pixelColor.red, pixelColor.green, pixelColor.blue);
 
 	cycle++;                   // increment PPU cycle count
+
+	if (cycle == 260 && (scanline >= 0 && scanline <= 239 || scanline == 261))
+		cartridge->CountPPUScanline();
 
 	if (cycle == 341)          // 341 cycles in a scanline (0-- 340)
 	{
@@ -617,7 +620,7 @@ uint8_t PPU::ReadRegister(uint16_t registerAddress)
 		case 0x2002:               // status - status register (read-only)
 			data = statusRegister.reg & 0xE0 | dataBuffer & 0x1F;
 			statusRegister.bits.verticalBlank = 0;    // reading PPU status register clears vblank bit 7
-			latched = false;                  // reading PPU statuis register clears address latch used by PPUSCROLL and PPUADDR
+			latched = false;                          // reading PPU status register clears address latch used by PPUSCROLL and PPUADDR
 			break;
 		case 0x2003:               // OAMADDR - object attribute memory address register (write-only)
 			break;

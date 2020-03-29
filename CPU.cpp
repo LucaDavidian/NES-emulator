@@ -59,10 +59,18 @@ void CPU::Clock()
         return;
     }
 
-    if (interruptPending)
+    if (NMIPending)
     {
         NMIHandler();
-        interruptPending = false;
+        NMIPending = false;
+
+        return;
+    }
+
+    if (IRQPending)
+    {
+        IRQHandler();
+        IRQPending = false;
 
         return;
     }
@@ -135,7 +143,7 @@ void CPU::NMIHandler()
     PC = NMIVector;
 }
 
-void CPU::IRQ()
+void CPU::IRQHandler()
 {
     // if interrupts are disabled ignore interrupt
     if (GetFlag(Flag::I))

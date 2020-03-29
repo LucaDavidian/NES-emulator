@@ -111,5 +111,11 @@ void Bus::Clock()      // TODO: CPU should be done with instruction before trigg
         cpu->NMI();  
     }
 
+    if (cartridge->InterruptAsserted())
+    {
+        cartridge->AcknowledgeInterrupt();
+        cpu->IRQ();
+    }
+
     systemClockCount++;
 }

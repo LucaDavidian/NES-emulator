@@ -21,6 +21,11 @@ public:
     void PPUWrite(uint16_t address, uint8_t data);
 
     MirroringMode GetMirroringMode();
+
+    bool InterruptAsserted();
+    void AcknowledgeInterrupt();
+
+    void CountPPUScanline();
 private:
     Vector<uint8_t> PRG_ROM;  // PRG ROM
     Vector<uint8_t> CHR_ROM;  // CHR ROM
