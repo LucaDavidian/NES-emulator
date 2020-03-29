@@ -1,12 +1,15 @@
 #include "bus.hpp"
 #include "CPU.hpp"
 #include "PPU.hpp"
+#include "APU.hpp"
 #include "cartridge.hpp"
 #include "controller.h"
 
 void Bus::Reset() 
 {
     cpu->Reset(); 
+    ppu->Reset();
+    apu->Reset();
 
     systemClockCount = 0; 
 }
@@ -35,9 +38,7 @@ uint8_t Bus::Read(uint16_t address)
         if (address == 0x4017)           // controller 2
             if (controller2 && controller2->GetState())
                 data = 0x01;
-    }
-    else if (address >= 0x4000 && address <= 0x401F)     // access APU,I/O...
-        ;  
+    } 
     else  // address >= 0x4020U && address <= 0xFFFF     // access cartridge
         data = cartridge->CPURead(address);
 
@@ -50,6 +51,8 @@ void Bus::Write(uint16_t address, uint8_t data)
         RAM[address & 0x07FF] = data;
     else if (address >= 0x2000 && address <= 0x3FFF)     // access PPU
         ppu->WriteRegister(address, data);
+    else if (address >= 0x4000 && address <= 0x4013 || address == 0x4015 || address == 0x4017)   // access APU
+        apu->WriteRegister(address, data);
     else if (address == 0x4014)                          // access OAM DMA
     {
         DMAPage = 0x01 * data;
@@ -59,14 +62,12 @@ void Bus::Write(uint16_t address, uint8_t data)
     }
     else if (address == 0x4016)                          // latch controller state
     {
-        if (controller1 && data & 0x01)
+        if (controller1 && !(data & 0x01))
             controller1->PollButtons();
 
-        if (controller2 && data & 0x01)
+        if (controller2 && !(data & 0x01))
             controller2->PollButtons();
     }
-    else if (address >= 0x4000 && address <= 0x401F)     // access APU,I/O...
-        ; 
     else  // address >= 0x4020U && address <= 0xFFFF     // access cartridge
         cartridge->CPUWrite(address, data);
 }
@@ -75,29 +76,33 @@ void Bus::Clock()      // TODO: CPU should be done with instruction before trigg
 {
     ppu->Clock();   
 
-    if (systemClockCount % 3 == 0)                    // PPU clock = 3 * CPU clock, DMA and CPU share same clock
+    apu->Clock();      // APU clock == CPU clock / 2
+
+    if (systemClockCount % 3 == 0)                    // CPU clock = PPU clock / 3, DMA and CPU share same clock
         if (DMAActive)                                // if DMA is active, suspend CPU
         {
             if (DMADummy)                             // dummy DMA cycle
             {
-                if (systemClockCount / 3 % 2 == 0)    // another dummy cycle if CPU/DMA clock cycle is odd
+                if (systemClockCount / 3 % 2)         // another dummy cycle if CPU/DMA clock cycle is odd
                     DMADummy = false;
             }
             else
             {
                 if (systemClockCount / 3 % 2 == 0)    // even CPU/DMA cycle: read data from system RAM
-                    DMAData = Read(DMAAddress++);
+                    DMAData = Read(DMAAddress);
                 else                                  // odd CPU/DMA cycle: write data to OAM
                 {
-                    Write(0x2003, (uint8_t)(DMAAddress & 0xFF) - 1);
+                    Write(0x2003, (uint8_t)(DMAAddress & 0x00FF));
                     Write(0x2004, DMAData);
-                    
+
+                    DMAAddress++;
+
                     if (DMAAddress >> 8 != DMAPage)   // if 256 bytes have been written, disable DMA
                         DMAActive = false;
                 }
             }
         }
-        else
+        else                                           // if DMA is not active clock CPU
             cpu->Clock();
 
     if (ppu->InterruptAsserted())    // check if PPU has triggered the vertical blank interrupt

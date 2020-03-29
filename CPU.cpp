@@ -40,14 +40,14 @@ void CPU::Write(uint16_t address, uint8_t data)
 void CPU::SetFlag(Flag flag, bool condition)
 {   
     if (condition)
-        P.reg |= 1U << static_cast<unsigned>(flag);
+        P.reg |= 1 << static_cast<unsigned>(flag);
     else
-        P.reg &= ~(1U << static_cast<unsigned>(flag));
+        P.reg &= ~(1 << static_cast<unsigned>(flag));
 }
 
 bool CPU::GetFlag(Flag flag)
 {
-    return P.reg & 1U << static_cast<unsigned>(flag);
+    return P.reg & 1 << static_cast<unsigned>(flag);
 }
 
 void CPU::Clock()
@@ -56,6 +56,14 @@ void CPU::Clock()
     if (currentInstructionCycles)
     {
         currentInstructionCycles--;
+        return;
+    }
+
+    if (interruptPending)
+    {
+        NMIHandler();
+        interruptPending = false;
+
         return;
     }
 
@@ -81,8 +89,6 @@ bool CPU::InstructionComplete()
     return currentInstructionCycles == 0;
 }
 
-/**** external inputs ****/
-
 void CPU::Reset()
 {
     A = 0x00;
@@ -105,11 +111,10 @@ void CPU::Reset()
 
     // jump to reset vector
     PC = resetVector;
-    //PC = 0xC000;  // nestest ROM auto
 }
 
-void CPU::NMI()
-{
+void CPU::NMIHandler()
+{   
     // set interrupt disable flag
     SetFlag(Flag::I, true);
 
@@ -346,7 +351,7 @@ void CPU::ASL()
     if (instructionTable[opcode].addressingMode == &CPU::Addr_Accumulator)
     {
         // shift accumulator one bit left (least significant bit == 0)
-        uint8_t shifted = A << 1U;
+        uint8_t shifted = A << 1;
 
         // transfer most significant bit to carry flag and update other status flags
         SetFlag(Flag::C, A & 0x80);
@@ -361,7 +366,7 @@ void CPU::ASL()
         uint8_t data = Read(address);
 
         // shift data one bit left (least significant bit == 0)
-        uint8_t shifted = data << 1U;
+        uint8_t shifted = data << 1;
 
         // transfer most significant bit to carry flag and update other status flags
         SetFlag(Flag::C, data & 0x80);
@@ -701,7 +706,7 @@ void CPU::JMP()
 void CPU::JSR()
 {
     // save last byte of JSR instruction (return address) on the stack
-    Write(stackBase + (uint16_t)S--, PC - 1 >> 8U & 0xFF);   // push PC high 
+    Write(stackBase + (uint16_t)S--, PC - 1 >> 8 & 0xFF);   // push PC high 
     Write(stackBase + (uint16_t)S--, PC - 1 & 0xFF);         // push PC low
 
     // jump to new address
@@ -853,7 +858,7 @@ void CPU::ROL()
     if (instructionTable[opcode].addressingMode == &CPU::Addr_Accumulator)
     {
         // shift accumulator one bit left (least significant bit == carry flag)
-        uint8_t shifted = A << 1U | P.bits.C;
+        uint8_t shifted = A << 1 | P.bits.C;
 
         // transfer most significant bit to carry flag and update other status flags
         SetFlag(Flag::C, A & 0x80);
@@ -903,7 +908,7 @@ void CPU::ROR()
         uint8_t data = Read(address);
 
         // shift data one bit right (most significant bit == carry flag)
-        uint8_t shifted = data >> 1U | P.bits.C << 7U;
+        uint8_t shifted = data >> 1 | P.bits.C << 7;
 
         // transfer least significant bit to carry flag and update other status flags
         SetFlag(Flag::C, data & 0x01);
@@ -930,7 +935,7 @@ void CPU::RTI()
     uint8_t PCH = Read(stackBase + (uint16_t)++S);
 
     // set program counter
-    PC = (uint16_t)PCH << 8U | PCL;
+    PC = (uint16_t)PCH << 8 | PCL;
 }
 
 // return from subroutine 
@@ -940,7 +945,7 @@ void CPU::RTS()
     uint8_t PCH = Read(stackBase + (uint16_t)++S);  // pop PC high
 
     // return to caller
-    PC = ((uint16_t)PCH << 8U | PCL) + 1;   // add one to return address (was last byte of JSR instruction)
+    PC = ((uint16_t)PCH << 8 | PCL) + 1;   // add one to return address (was last byte of JSR instruction)
 }
 
 // subtract memory from accumulator with borrow

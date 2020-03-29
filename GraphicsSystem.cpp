@@ -1,4 +1,5 @@
 #include "GraphicsSystem.h"
+#include "SDL.h"
 #include "Error.h"
 
 GraphicsSystem &GraphicsSystem::GetInstance()

@@ -70,7 +70,7 @@ private:
 			uint8_t interruptEnable : 1;         // generate interrupt at start of vblank interval - 0: disabled, 1: enabled
 		} bits;
 		uint8_t reg;
-	} control;             // 0x2000: PPU control register (write-only)
+	} controlRegister;             // 0x2000: PPU control register (write-only)
 
 	union
 	{
@@ -86,19 +86,19 @@ private:
 			uint8_t emphasizeBlue : 1;
 		} bits;
 		uint8_t reg;
-	} mask;                // 0x2001: PPU mask register (write-only)
+	} maskRegister;                // 0x2001: PPU mask register (write-only)
 	 
 	union
 	{
 		struct
 		{
-			uint8_t unused : 5;
+			uint8_t : 5;
 			uint8_t spriteOverflow : 1;
 			uint8_t spriteZeroHit : 1;    // opaque pixel of background overlaps opaque pixel of sprite 0 (cleared @ cycle 1 of pre-render scanline 261)
 			uint8_t verticalBlank : 1;    // vertical blanking period has started (set @ cycle 1 of scanline 241, cleared @ cycle 1 of pre-render scanline 261) - 0: not in vblank, 1: in vblank
 		} bits;
 		uint8_t reg;
-	} status;              // 0x2002: PPU status register (read-only)
+	} statusRegister;              // 0x2002: PPU status register (read-only)
 
 	/**** internal PPU address registers ****/
 	union
@@ -110,7 +110,7 @@ private:
 			uint16_t baseNametableAddressX : 1;
 			uint16_t baseNametableAddressY : 1;
 			uint16_t fineY : 3;
-			uint16_t unused : 1;
+			uint16_t : 1;
 		} bits;
 		uint16_t reg;
 	} addressT, addressV;   // temporary VRAM adddress register and VRAM address register

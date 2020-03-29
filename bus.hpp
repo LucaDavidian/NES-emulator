@@ -5,6 +5,7 @@
 
 class CPU;
 class PPU;
+class APU;
 class Cartridge;
 class Controller;
 
@@ -16,8 +17,9 @@ public:
 
     void ConnectCPU(CPU *cpu) { this->cpu = cpu; }
     void ConnectPPU(PPU *ppu) { this->ppu = ppu; }
-    void InsertCartridge(Cartridge *cartridge);
+    void ConnectAPU(APU *apu) { this->apu = apu; }
     void ConnectController(Controller *controller) { this->controller1 = controller; }
+    void InsertCartridge(Cartridge *cartridge);
 
     void Reset();
     void Clock();
@@ -31,7 +33,8 @@ private:
     bool DMADummy = false;
 
     CPU *cpu = nullptr;                   
-    PPU *ppu = nullptr;                   
+    PPU *ppu = nullptr; 
+    APU *apu = nullptr;
     Cartridge *cartridge = nullptr;
     Controller *controller1 = nullptr;
     Controller *controller2 = nullptr;

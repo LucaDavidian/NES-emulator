@@ -1,8 +1,7 @@
 #ifndef RENDERING_SYSTEM_H
 #define RENDERING_SYSTEM_H
 
-#include "SDL.h"
-
+struct SDL_Texture;
 class Screen;
 
 class RenderingSystem
@@ -10,7 +9,7 @@ class RenderingSystem
 public:
 	static RenderingSystem &GetInstance();
 
-	~RenderingSystem() { SDL_DestroyTexture(texture); }
+	~RenderingSystem();
 
 	void Render(Screen &screen);
 private:

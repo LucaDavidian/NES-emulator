@@ -1,5 +1,6 @@
 #include "RenderingSystem.h"
 #include "GraphicsSystem.h"
+#include "SDL.h"
 #include "screen.hpp"
 #include "Error.h"
 
@@ -16,6 +17,11 @@ RenderingSystem::RenderingSystem() : texture(nullptr)
 	
 	if (!texture)
 		Error("can't create texture", SDL_GetError());
+}
+
+RenderingSystem::~RenderingSystem() 
+{ 
+	SDL_DestroyTexture(texture); 
 }
 
 void RenderingSystem::Render(Screen &screen)

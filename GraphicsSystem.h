@@ -1,7 +1,8 @@
 #ifndef GRAPHICS_SYSTEM_H
 #define GRAPHICS_SYSTEM_H
 
-#include "SDL.h"
+struct SDL_Window;
+struct SDL_Renderer;
 
 class GraphicsSystem
 {

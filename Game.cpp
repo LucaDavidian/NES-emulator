@@ -1,7 +1,8 @@
 #include "Game.h"
 #include "GraphicsSystem.h"
 #include "InputSystem.h"
-#include "SDL.h"
+#include "RenderingSystem.h"
+#include "AudioSystem.h"
 #include "Timer.h"
 #include <iostream>
 
@@ -25,6 +26,9 @@ void Game::Initialize(int windowWidth, int windowHeight)
 
 	Timer::GetInstance().Reset();
 	Timer::GetInstance().Start();
+
+	AudioSystem::GetInstance().SetCallback(UpdateStateSyncWithAudio);
+	AudioSystem::GetInstance().StartPlayback();
 }
 
 void Game::Run()
@@ -61,17 +65,44 @@ void Game::GetInput()
 
 void Game::UpdateState()
 {	
-	while (!nes.FrameComplete())	
-		nes.Clock();
+	//static double elapsedTime;
 
-	Timer::GetInstance().Tick();
-	double delta = Timer::GetInstance().GetDeltaTime();
+	//Timer::GetInstance().Tick();
+	//double deltaTime = Timer::GetInstance().GetDeltaTime();
 
-	std::cout << "delta time: " << delta * 1000 << " ms" << std::endl;
-	std::cout << "fps: " << (int)(1.0 / delta) << std::endl;
+	//if (elapsedTime < 1.0 / 60.0)
+	//	elapsedTime += deltaTime;
+	//else
+	//{
+	//	while (!nes.FrameComplete())
+	//		nes.Clock();
+
+	//	std::cout << "fps: " << (int)(1.0 / elapsedTime) << std::endl;
+
+	//	elapsedTime = 0.0;
+	//}
 }
 
-#include "RenderingSystem.h"
+void Game::UpdateStateSyncWithAudio()
+{
+	double cyclesPerBuffer = 5.369318 * 1000000 * 512 / 48000;
+	double cyclesPerSample = cyclesPerBuffer / 512;
+
+	double cyclesDone = 0.0;
+
+	for (int i = 0; i < cyclesPerBuffer; i++)
+	{
+		GetInstance().nes.Clock();
+
+		cyclesDone += 1.0;
+
+		if (cyclesDone >= cyclesPerSample)
+		{
+			AudioSystem::GetInstance().EnqueueSample(GetInstance().nes.GetAudioSample());
+			cyclesDone -= cyclesPerSample;
+		}
+	}
+}
 
 void Game::Render()
 {

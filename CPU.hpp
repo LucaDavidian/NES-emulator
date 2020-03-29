@@ -25,16 +25,18 @@ public:
 public:
     CPU(Bus &bus);
 
+    /**** external inputs ****/
+    void Reset();
+    void NMI() { interruptPending = true; }
+    void IRQ();
+
     void Clock();
     bool InstructionComplete();
 
-    /**** external inputs ****/
-    void Reset();
-    void NMI();
-    void IRQ();
-
     /**** debugging ****/
     std::map<uint16_t,std::string> Disassemble(int startAddress, int endAddress);
+private:
+    void NMIHandler();
 private:
     /**** 6505 has 13 addressing modes: ****/
     // fixed/direct addressing modes
@@ -160,6 +162,8 @@ private:
     uint16_t currentInstructionCycles = 0;      // remaining cycles for executing instruction
     uint64_t totalCycles = 0;                   // total number of CPU clock cycles
     bool pageCrossed = false;                   // true if a 256 bytes memory page has been crossed
+
+    bool interruptPending = false;
 
     Bus &bus;
 };

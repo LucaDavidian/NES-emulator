@@ -1,4 +1,5 @@
 #include "cartridge.hpp"
+#include "mapper.hpp"
 #include <fstream>
 #include <exception>
 
@@ -43,49 +44,79 @@ void Cartridge::LoadRom(const std::string &ROMFilePath)
     CHR_ROM.Resize(nBanksCHR * 8192);   // a bank of character memory is 8 KiB
     ROMFile.read((char*)CHR_ROM.Data(), CHR_ROM.Size());
 
-    mapperID = header.flags7 & 0xF0 | header.flags6 >> 4U; 
+    mapperID = header.flags7 & 0xF0 | header.flags6 >> 4; 
 
     if (header.flags6 & 0x01)
-        mirroringMode = MirroringMode::VERTICAL;
-    else
-        mirroringMode = MirroringMode::HORIZONTAL;
+        hardwareMirroringMode = MirroringMode::VERTICAL;
+    else  // (header.flags6 & 0x01) == 0
+        hardwareMirroringMode = MirroringMode::HORIZONTAL;
     
     switch (mapperID)
     {
         case 0:
             mapper = new Mapper0(nBanksPRG, nBanksCHR);
             break;
+        case 1:
+            mapper = new Mapper1(nBanksPRG, nBanksCHR);
+            break;
+        case 2:
+            mapper = new Mapper2(nBanksPRG, nBanksCHR);
+            break;
+        case 3:
+            mapper = new Mapper3(nBanksPRG, nBanksCHR);
+            break;
+        case 4:
+            break;
         default:
-            mapper = new Mapper0(nBanksPRG, nBanksCHR);
+            // error
+            break;
     }
 
     ROMFile.close();
 }
 
-uint8_t Cartridge::CPURead(uint16_t address)
+MirroringMode Cartridge::GetMirroringMode()
 {
-    uint16_t mappedAddress = mapper->MapCPURead(address);
+    MirroringMode mirroringMode = mapper->GetMirroringMode();
 
-    return PRG_ROM[mappedAddress];
+    if (mirroringMode == MirroringMode::HARDWARE)    // set by hardware on the cartridge
+        return hardwareMirroringMode;            
+    else                                             // dynamically set by mapping circuit
+        return mirroringMode;                     
 }
 
-void Cartridge::CPUWrite(uint16_t address, uint8_t data)
+uint8_t Cartridge::CPURead(uint16_t address)   // CPU read 0x4020 - 0xFFFF
 {
-    uint16_t mappedAddress = mapper->MapCPUWrite(address);
+    bool fromRAM = false;
 
-    PRG_ROM[mappedAddress] = data;
+    uint32_t mappedAddress = mapper->MapReadPRG(address, fromRAM);
+
+    if (fromRAM)
+        return PRG_RAM[mappedAddress];
+    else
+        return PRG_ROM[mappedAddress];
 }
 
-uint8_t Cartridge::PPURead(uint16_t address)
+void Cartridge::CPUWrite(uint16_t address, uint8_t data)   // CPU write 0x4020 - 0xFFFF
 {
-    uint16_t mappedAddress = mapper->MapPPURead(address);
+    bool toRAM = false;
+
+    uint32_t mappedAddress = mapper->MapWritePRG(address, data, toRAM);   
+
+    if (toRAM)
+        PRG_RAM[mappedAddress] = data;
+}
+
+uint8_t Cartridge::PPURead(uint16_t address)   // PPU read 0x0000 - 0x1FFFF
+{
+    uint32_t mappedAddress = mapper->MapReadCHR(address);
 
     return CHR_ROM[mappedAddress];
 }
 
-void Cartridge::PPUWrite(uint16_t address, uint8_t data)
+void Cartridge::PPUWrite(uint16_t address, uint8_t data)  // PPU write 0x0000 - 0x1FFFF
 {
-    uint16_t mappedAddress = mapper->MapPPUWrite(address);
+    uint32_t mappedAddress = mapper->MapWriteCHR(address);
 
     CHR_ROM[mappedAddress] = data;
 }

@@ -75,9 +75,9 @@ PPU::PPU()
 
 void PPU::Reset()
 {
-	control.reg = 0x00;
-	mask.reg = 0x00;
-	status.reg = 0x00;
+	controlRegister.reg = 0x00;
+	maskRegister.reg = 0x00;
+	statusRegister.reg = 0x00;
 
 	addressV.reg = 0x0000;
 	addressT.reg = 0x0000;
@@ -103,7 +103,7 @@ void PPU::Reset()
 
 void PPU::IncrementAddressX()
 {
-	if (mask.bits.renderBackground || mask.bits.renderSprites)
+	if (maskRegister.bits.renderBackground || maskRegister.bits.renderSprites)
 	{
 		if (addressV.bits.coarseX == 31)
 		{
@@ -117,7 +117,7 @@ void PPU::IncrementAddressX()
 
 void PPU::IncrementAddressY()
 {
-	if (mask.bits.renderBackground || mask.bits.renderSprites)
+	if (maskRegister.bits.renderBackground || maskRegister.bits.renderSprites)
 	{
 		if (addressV.bits.fineY == 7)
 		{
@@ -140,7 +140,7 @@ void PPU::IncrementAddressY()
 
 void PPU::CopyAddressX()
 {
-	if (mask.bits.renderBackground || mask.bits.renderSprites)
+	if (maskRegister.bits.renderBackground || maskRegister.bits.renderSprites)
 	{
 		addressV.bits.coarseX = addressT.bits.coarseX;
 		addressV.bits.baseNametableAddressX = addressT.bits.baseNametableAddressX;
@@ -149,7 +149,7 @@ void PPU::CopyAddressX()
 
 void PPU::CopyAddressY()
 {
-	if (mask.bits.renderBackground || mask.bits.renderSprites)
+	if (maskRegister.bits.renderBackground || maskRegister.bits.renderSprites)
 	{
 		addressV.bits.coarseY = addressT.bits.coarseY;
 		addressV.bits.baseNametableAddressY = addressT.bits.baseNametableAddressY;
@@ -173,7 +173,7 @@ void PPU::ShiftBackgroundRegisters()
 {
 	static uint8_t shifted;
 
-	if (mask.bits.renderBackground)
+	if (maskRegister.bits.renderBackground)
 	{
 		backgroundShiftRegisterLow <<= 1;
 		backgroundShiftRegisterHigh <<= 1;
@@ -190,7 +190,7 @@ void PPU::Clock()
 {
 	if (scanline >= 0 && scanline <= 239)              // visible frame
 	{
-		/**** background rendering ****/
+		/**************** background rendering ********************/
 		if (cycle >= 1 && cycle <= 256 || cycle >= 321 && cycle <= 336)
 		{
 			ShiftBackgroundRegisters();
@@ -212,10 +212,10 @@ void PPU::Clock()
 					attribute &= 0x03;
 					break;
 				case 5:     // fetch background low byte from pattern table
-					backgroundLow = Read(control.bits.backgroundPatternTable * 0x1000 + (tileID << 4) + addressV.bits.fineY);
+					backgroundLow = Read(controlRegister.bits.backgroundPatternTable * 0x1000 + (tileID << 4) + addressV.bits.fineY);
 					break;
 				case 7:     // fetch background high byte from pattern table, increment X
-					backgroundHigh = Read(control.bits.backgroundPatternTable * 0x1000 + (tileID << 4) + addressV.bits.fineY + 8);
+					backgroundHigh = Read(controlRegister.bits.backgroundPatternTable * 0x1000 + (tileID << 4) + addressV.bits.fineY + 8);
 					IncrementAddressX();
 					break;
 			}
@@ -228,7 +228,7 @@ void PPU::Clock()
 		else if (cycle == 338 || cycle == 340)
 			tileID = Read(0x2000 | addressV.reg & 0x0FFF);	
 
-		/**** sprites rendering ****/
+		/******************** sprites rendering ********************/
 		if (cycle == 0)
 		{
 			numScanlineSprites = spriteCount;
@@ -240,7 +240,7 @@ void PPU::Clock()
 		}
 		else if (cycle >= 1 && cycle <= 256)
 		{
-			if (mask.bits.renderSprites)
+			if (maskRegister.bits.renderSprites)
 				for (int i = 0; i < numScanlineSprites; i++)
 					if (spriteXCounter[i] + 1)  // visible pixels start at cycle 1
 						spriteXCounter[i]--;
@@ -252,7 +252,7 @@ void PPU::Clock()
 			
 			if (cycle >= 1 && cycle <= 64)           // clear secondary OAM
 			{
-				uint8_t data = 0x00;
+				static uint8_t data;
 
 				if (cycle % 2)    // odd PPU cycle
 					data = 0xFF;                     // during cycles 1 - 64 reading from OAM memory returns 0xFF
@@ -273,7 +273,7 @@ void PPU::Clock()
 						{
 							secondaryOAM[spriteCount].y = spriteY;
 
-							if (difference >= 0 && difference < (control.bits.spriteSize ? 16 : 8))
+							if (difference >= 0 && difference < (controlRegister.bits.spriteSize ? 16 : 8))
 							{
 								secondaryOAM[spriteCount].tileID = OAM[OAMEntry].tileID;
 								secondaryOAM[spriteCount].attribute = OAM[OAMEntry].attribute;
@@ -286,9 +286,9 @@ void PPU::Clock()
 							}
 						}
 						else if (spriteCount == 8)
-							if (difference >= 0 && difference < (control.bits.spriteSize ? 16 : 8))
+							if (difference >= 0 && difference < (controlRegister.bits.spriteSize ? 16 : 8))
 							{
-								status.bits.spriteOverflow = 1;
+								statusRegister.bits.spriteOverflow = 1;
 								spriteCount++;
 							}
 					}
@@ -327,25 +327,28 @@ void PPU::Clock()
 				case 5:
 					spriteXCounter[cycle - 257 >> 3] = secondaryOAM[cycle - 257 >> 3].x;
 					spriteTileY = scanline - spriteY;  
-					if (control.bits.spriteSize == 0)    // 8x8px sprite
+					if (controlRegister.bits.spriteSize == 0)          // 8x8px sprite
 					{
 						if (spriteAttribute[cycle - 257 >> 3] & 0x80)  // vertical flip
 							spriteTileY = 7 - spriteTileY;
 
-						spriteTileBaseAddress = control.bits.spritePatternTable * 0x1000 + (spriteTileID << 4) + spriteTileY;
+						spriteTileBaseAddress = controlRegister.bits.spritePatternTable * 0x1000 + (spriteTileID << 4) + spriteTileY;
 					}
-					else                                // 8x16px sprite
+					else                                               // 8x16px sprite
 					{
+						uint8_t patternTable = spriteTileID & 0x01;    // in 8x16px sprite mode bit 0 is the sprite pattern table
+						spriteTileID &= ~0x01;                         // in 8x16px mode the 7 most significant bits are the ID of top tile (bottom tile is next tile ID)
+
 						if (spriteAttribute[cycle - 257 >> 3] & 0x80)  // vertical flip
 							spriteTileY = 15 - spriteTileY;
 
 						if (spriteTileY > 7)
 						{
-							spriteTileID += 0x02;   // in 8x16px sprite mode bit 0 is the sprite pattern table
+							spriteTileID |= 0x01;                      
 							spriteTileY -= 8;
 						}	
 
-						spriteTileBaseAddress = (spriteTileID & 0x01) * 0x1000 + ((spriteTileID & 0xFE) << 3) + spriteTileY;
+						spriteTileBaseAddress = patternTable * 0x1000 + (spriteTileID  << 4) + spriteTileY;
 					}
 					spriteShiftRegisterLow[cycle - 257 >> 3] = Read(spriteTileBaseAddress);
 					if (spriteAttribute[cycle - 257 >> 3] & 0x40)  // horizontal flip
@@ -387,9 +390,9 @@ void PPU::Clock()
 	{
 		if (cycle == 1)    // entered vertical blanking period, set status bit and emit interrupt (if enabled)
 		{
-			status.bits.verticalBlank = 1;
+			statusRegister.bits.verticalBlank = 1;
 
-			if (control.bits.interruptEnable)
+			if (controlRegister.bits.interruptEnable)
 				interruptAsserted = true;
 		}	
 	}
@@ -397,14 +400,14 @@ void PPU::Clock()
 		;
 	else if (scanline == 261)                          // pre-render scanline
 	{
-		/**** background rendering ****/
+		/******************** background rendering ********************/
 		if (cycle >= 1 && cycle <= 256 || cycle >= 321 && cycle <= 336)
 		{
 			if (cycle == 1)
 			{
-				status.bits.verticalBlank = 0;     // vertical blanking period ended - clear the status bit
-				status.bits.spriteOverflow = 0;    // clear sprite overflow flag
-				status.bits.spriteZeroHit = 0;     // clear sprite 0 hit flag
+				statusRegister.bits.verticalBlank = 0;     // vertical blanking period ended - clear the status bit
+				statusRegister.bits.spriteOverflow = 0;    // clear sprite overflow flag
+				statusRegister.bits.spriteZeroHit = 0;     // clear sprite 0 hit flag
 			}
 
 			ShiftBackgroundRegisters();
@@ -426,10 +429,10 @@ void PPU::Clock()
 					attribute &= 0x03;
 					break;
 				case 5:     // fetch background low byte from pattern table
-					backgroundLow = Read(control.bits.backgroundPatternTable * 0x1000 + (tileID << 4) + addressV.bits.fineY);
+					backgroundLow = Read(controlRegister.bits.backgroundPatternTable * 0x1000 + (tileID << 4) + addressV.bits.fineY);
 					break;
 				case 7:     // fetch background high byte from pattern table, increment X
-					backgroundHigh = Read(control.bits.backgroundPatternTable * 0x1000 + (tileID << 4) + addressV.bits.fineY + 8);
+					backgroundHigh = Read(controlRegister.bits.backgroundPatternTable * 0x1000 + (tileID << 4) + addressV.bits.fineY + 8);
 					IncrementAddressX();
 					break;
 			}
@@ -444,7 +447,7 @@ void PPU::Clock()
 		else if (cycle == 338 || cycle == 340)
 			tileID = Read(0x2000 | addressV.reg & 0x0FFF);
 
-		/**** sprites rendering ****/
+		/******************** sprites rendering ********************/
 		if (cycle >= 1 && cycle <= 64)          // no secondary OAM clear on pre-render scanline 261
 			;
 		else if (cycle >= 65 && cycle <= 256)   // no sprite evaluation on pre-render scanline 261
@@ -471,12 +474,12 @@ void PPU::Clock()
 				case 5:
 					spriteXCounter[cycle - 257 >> 3] = secondaryOAM[cycle - 257 >> 3].x;
 					spriteTileY = scanline - spriteY;
-					if (control.bits.spriteSize == 0)    // 8x8px sprite
+					if (controlRegister.bits.spriteSize == 0)    // 8x8px sprite
 					{
 						if (spriteAttribute[cycle - 257 >> 3] & 0x80)  // vertical flip
 							spriteTileY = 7 - spriteTileY;
 	
-						spriteTileBaseAddress = control.bits.spritePatternTable * 0x1000 + (spriteTileID << 4) + spriteTileY;
+						spriteTileBaseAddress = controlRegister.bits.spritePatternTable * 0x1000 + (spriteTileID << 4) + spriteTileY;
 					}
 					else                                // 8x16px sprite
 					{
@@ -530,7 +533,7 @@ void PPU::Clock()
 	uint8_t backgroundPixel = 0x00;
 	uint8_t backgroundPalette = 0x00;
 
-	if (mask.bits.renderBackground)
+	if (maskRegister.bits.renderBackground)
 	{
 		uint16_t pixelMask = 0x8000 >> fineX;
 		uint8_t paletteMask = 0x80 >> fineX;
@@ -546,7 +549,7 @@ void PPU::Clock()
 	uint8_t spritePalette = 0x00;
 	uint8_t spritePriority = 0;
 	
-	if (mask.bits.renderSprites)
+	if (maskRegister.bits.renderSprites)
 	{
 		for (int i = 0; i < numScanlineSprites; i++)
 		{
@@ -563,7 +566,7 @@ void PPU::Clock()
 				if (spritePixel != 0)  // if sprite pixel is opaque exit loop, else keep looking for other sprites
 				{
 					if (spriteZero && i == 0)
-						status.bits.spriteZeroHit = 1;
+						statusRegister.bits.spriteZeroHit = 1;
 
 					break;
 				}
@@ -583,7 +586,7 @@ void PPU::Clock()
 		else
 			paletteIndex = backgroundPalette << 2 | backgroundPixel;
 
-	Color pixelColor = paletteColors[Read(0x3F00 + paletteIndex)];
+	Color pixelColor = paletteColors[Read(0x3F00 + paletteIndex) & 0x3F];
 	screen->SetPixel(cycle - 1, scanline, pixelColor.red, pixelColor.green, pixelColor.blue);
 
 	cycle++;                   // increment PPU cycle count
@@ -596,7 +599,7 @@ void PPU::Clock()
 		if (scanline == 262)   // 262 scanlines in a frame (0 - 261)
 		{
 			scanline = 0;
-			frameComplete = true;
+			frameComplete = true;       /*  DisplayBackground();*/
 		}
 	}
 }
@@ -612,8 +615,8 @@ uint8_t PPU::ReadRegister(uint16_t registerAddress)
 		case 0x2001:               // mask - mask register (write-only)
 			break;
 		case 0x2002:               // status - status register (read-only)
-			data = status.reg & 0xE0 | dataBuffer & 0x1F;
-			status.bits.verticalBlank = 0;    // reading PPU status register clears vblank bit 7
+			data = statusRegister.reg & 0xE0 | dataBuffer & 0x1F;
+			statusRegister.bits.verticalBlank = 0;    // reading PPU status register clears vblank bit 7
 			latched = false;                  // reading PPU statuis register clears address latch used by PPUSCROLL and PPUADDR
 			break;
 		case 0x2003:               // OAMADDR - object attribute memory address register (write-only)
@@ -630,7 +633,7 @@ uint8_t PPU::ReadRegister(uint16_t registerAddress)
 			dataBuffer = Read(addressV.reg);     // PPU read 
 			if (addressV.reg >= 0x3F00)
 				data = dataBuffer;               // reading from palette memory is not buffered
-			addressV.reg += control.bits.addressIncrement ? 32 : 1; // increment by 1 (coarseX) or by 32 (coarseY)
+			addressV.reg += controlRegister.bits.addressIncrement ? 32 : 1; // increment by 1 (coarseX) or by 32 (coarseY)
 			break;
 	}
 
@@ -642,12 +645,12 @@ void PPU::WriteRegister(uint16_t registerAddress, uint8_t data)
 	switch (registerAddress)
 	{
 		case 0x2000:               // control - control register (write-only)
-			control.reg = data;
-			addressT.bits.baseNametableAddressX = control.bits.baseNametableAddressX;   // writing control register updates nametable base address bits in temporary VRAM address register
-			addressT.bits.baseNametableAddressY = control.bits.baseNametableAddressY;
+			controlRegister.reg = data;
+			addressT.bits.baseNametableAddressX = controlRegister.bits.baseNametableAddressX;   // writing control register updates nametable base address bits in temporary VRAM address register
+			addressT.bits.baseNametableAddressY = controlRegister.bits.baseNametableAddressY;
 			break;
 		case 0x2001:               // mask - mask register (write-only)
-			mask.reg = data;
+			maskRegister.reg = data;
 			break;
 		case 0x2002:               // status - status register (read-only)
 			break;
@@ -686,7 +689,7 @@ void PPU::WriteRegister(uint16_t registerAddress, uint8_t data)
 			break;
 		case 0x2007:               // PPUDATA - data register (read/write)
 			Write(addressV.reg, data);    // PPU write
-			addressV.reg += control.bits.addressIncrement ? 32 : 1; // increment by 1 (coarseX) or by 32 (coarseY)
+			addressV.reg += controlRegister.bits.addressIncrement ? 32 : 1; // increment by 1 (coarseX) or by 32 (coarseY)
 			break;
 	}
 }
@@ -704,14 +707,14 @@ uint8_t PPU::Read(uint16_t address)
 
 		address &= 0x0FFF;      // mask address (VRAM array starts at 0)
 
-		if (cartridge->mirroringMode == Cartridge::MirroringMode::HORIZONTAL)
+		if (cartridge->GetMirroringMode() == MirroringMode::HORIZONTAL)
 		{
 			if ((address & 1 << 11) == 0)
 				data = VRAM[0][address & 0x03FF];
 			else  // (address & 1 << 11) != 0
 				data = VRAM[1][address & 0x03FF];
 		}
-		else if (cartridge->mirroringMode == Cartridge::MirroringMode::VERTICAL)
+		else if (cartridge->GetMirroringMode() == MirroringMode::VERTICAL)
 		{
 			address &= 0x07FF;  // mask off bit 11
 
@@ -719,6 +722,14 @@ uint8_t PPU::Read(uint16_t address)
 				data = VRAM[0][address & 0x03FF];
 			else  // (address & 1 << 10) != 0
 				data = VRAM[1][address & 0x03FF];
+		}
+		else if (cartridge->GetMirroringMode() == MirroringMode::SINGLE_SCREEN_LOWER)
+		{
+
+		}
+		else if (cartridge->GetMirroringMode() == MirroringMode::SINGLE_SCREEN_UPPER)
+		{
+
 		}
 	}
 	else if (address >= 0x3F00 && address <= 0x3FFF)      // 32 bytes palette memory
@@ -752,14 +763,14 @@ void PPU::Write(uint16_t address, uint8_t data)
 
 		address &= 0x0FFF;      // mask address (VRAM array starts from 0)
 
-		if (cartridge->mirroringMode == Cartridge::MirroringMode::HORIZONTAL)
+		if (cartridge->GetMirroringMode() == MirroringMode::HORIZONTAL)
 		{
 			if ((address & 1 << 11) == 0)
 				VRAM[0][address & 0x03FF] = data;
 			else  // (address & 1 << 11) != 0
 				VRAM[1][address & 0x03FF] = data;
 		}
-		else if (cartridge->mirroringMode == Cartridge::MirroringMode::VERTICAL)
+		else if (cartridge->GetMirroringMode() == MirroringMode::VERTICAL)
 		{
 			address &= 0x07FF;  // mask off bit 11
 
@@ -767,6 +778,14 @@ void PPU::Write(uint16_t address, uint8_t data)
 				VRAM[0][address & 0x03FF] = data;
 			else  // (address & 1 << 10) != 0
 				VRAM[1][address & 0x03FF] = data;
+		}
+		else if (cartridge->GetMirroringMode() == MirroringMode::SINGLE_SCREEN_LOWER)
+		{
+
+		}
+		else if (cartridge->GetMirroringMode() == MirroringMode::SINGLE_SCREEN_UPPER)
+		{
+
 		}
 	}
 	else if (address >= 0x3F00 && address <= 0x3FFF)       // 32 bytes palette memory
@@ -794,15 +813,15 @@ void PPU::DisplayPatternTable(uint8_t index)
 
 void PPU::DisplayBackground()
 {
-	if (!mask.bits.renderBackground)
+	if (!maskRegister.bits.renderBackground)
 		return;
 
 	for (int y = 0; y < 30; y++)
 		for (int x = 0; x < 32; x++)
 		{
-			uint8_t tileID = Read((0x2000 | control.bits.baseNametableAddressY << 11 | control.bits.baseNametableAddressX << 10) + y * 32 + x);
+			uint8_t tileID = Read((0x2000 | controlRegister.bits.baseNametableAddressY << 11 | controlRegister.bits.baseNametableAddressX << 10) + y * 32 + x);
 			
-			uint8_t attribute = Read((0x2000 | control.bits.baseNametableAddressY << 11 | control.bits.baseNametableAddressX << 10) + 0x03C0 + y / 4 * 8 + x / 4);
+			uint8_t attribute = Read((0x2000 | controlRegister.bits.baseNametableAddressY << 11 | controlRegister.bits.baseNametableAddressX << 10) + 0x03C0 + y / 4 * 8 + x / 4);
 			if (x % 4 / 2)
 				attribute >>= 2;
 			if (y % 4 / 2)
@@ -811,8 +830,8 @@ void PPU::DisplayBackground()
 
 			for (int fineY = 0; fineY < 8; fineY++)
 			{
-				uint8_t backgroundL = Read(control.bits.backgroundPatternTable * 0x1000 + tileID * 16 + fineY);
-				uint8_t backgroundH = Read(control.bits.backgroundPatternTable * 0x1000 + tileID * 16 + fineY + 8);
+				uint8_t backgroundL = Read(controlRegister.bits.backgroundPatternTable * 0x1000 + tileID * 16 + fineY);
+				uint8_t backgroundH = Read(controlRegister.bits.backgroundPatternTable * 0x1000 + tileID * 16 + fineY + 8);
 
 				for (int p = 0; p < 8; p++)
 				{

@@ -8,8 +8,8 @@ Controller::Controller() : state{}
 
 bool Controller::GetState()
 {
-	bool button = state.reg & 0x80;
-	state.reg <<= 1;
+	bool button = state & 0x80;
+	state <<= 1;
 
 	return button;
 }
@@ -19,42 +19,42 @@ void Controller::PollButtons()
 	SDL_PumpEvents();
 
 	if (keyboardState[SDL_SCANCODE_W])
-		state.bits.up = 1;
+		PressButton(Button::UP);
 	else
-		state.bits.up = 0;
+		ReleaseButton(Button::UP);
 
 	if (keyboardState[SDL_SCANCODE_S])
-		state.bits.down = 1;
+		PressButton(Button::DOWN);
 	else
-		state.bits.down = 0;
+		ReleaseButton(Button::DOWN);
 
 	if (keyboardState[SDL_SCANCODE_A])
-		state.bits.left = 1;
+		PressButton(Button::LEFT);
 	else
-		state.bits.left = 0;
+		ReleaseButton(Button::LEFT);
 
 	if (keyboardState[SDL_SCANCODE_D])
-		state.bits.right = 1;
+		PressButton(Button::RIGHT);
 	else
-		state.bits.right = 0;
+		ReleaseButton(Button::RIGHT);
 
 	if (keyboardState[SDL_SCANCODE_U])
-		state.bits.select = 1;
+		PressButton(Button::SELECT);
 	else
-		state.bits.select = 0;
+		ReleaseButton(Button::SELECT);
 
 	if (keyboardState[SDL_SCANCODE_I])
-		state.bits.start = 1;
+		PressButton(Button::START);
 	else
-		state.bits.start = 0;
+		ReleaseButton(Button::START);
 
 	if (keyboardState[SDL_SCANCODE_J])
-		state.bits.A = 1;
+		PressButton(Button::A);
 	else
-		state.bits.A = 0;
+		ReleaseButton(Button::A);
 
 	if (keyboardState[SDL_SCANCODE_K])
-		state.bits.B = 1;
+		PressButton(Button::B);
 	else
-		state.bits.B = 0;
+		ReleaseButton(Button::B);
 }

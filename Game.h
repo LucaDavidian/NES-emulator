@@ -20,6 +20,8 @@ private:
 	void UpdateState();
 	void Render();
 
+	static void UpdateStateSyncWithAudio();
+
 	bool mQuit = false;
 
 	NES nes;
