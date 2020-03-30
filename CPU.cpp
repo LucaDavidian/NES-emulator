@@ -52,7 +52,7 @@ bool CPU::GetFlag(Flag flag)
 
 void CPU::Clock()
 {
-    // if cycles is not zero, CPU is processing the instruction
+    // CPU is processing the instruction
     if (currentInstructionCycles)
     {
         currentInstructionCycles--;
@@ -75,14 +75,14 @@ void CPU::Clock()
         return;
     }
 
-    opcode = Read(PC++);  // fetch opcode and increment Program Counter
+    opcode = Read(PC++);                                   // FETCH opcode and increment Program Counter
 
-    Instruction instruction = instructionTable[opcode];    // decode instruction
+    Instruction instruction = instructionTable[opcode];    // DECODE instruction
 
     currentInstructionCycles = instruction.CPUcycles;      // set instruction cycles (instructions can add cycles)
 
     (this->*instruction.addressingMode)();                 // get address 
-    (this->*instruction.instructionHandler)();             // execute instructions (add cycles if necessary)    
+    (this->*instruction.instructionHandler)();             // EXECUTE instructions (add cycles if necessary)    
 
     if (pageCrossed)
         pageCrossed = false;
@@ -123,15 +123,15 @@ void CPU::Reset()
 
 void CPU::NMIHandler()
 {   
-    // set interrupt disable flag
-    SetFlag(Flag::I, true);
-
     // clear break flag
     SetFlag(Flag::B, false);
 
-    Write(stackBase + (uint16_t)S--, PC >> 8U & 0xFF);    // push PCH on stack
+    Write(stackBase + (uint16_t)S--, PC >> 8 & 0xFF);     // push PCH on stack
     Write(stackBase + (uint16_t)S--, PC & 0xFF);          // push PCL on stack
     Write(stackBase + (uint16_t)S--, P.reg);              // push processor status register on stack
+
+     // set interrupt disable flag
+    SetFlag(Flag::I, true);
 
     // get NMI vector
     uint8_t NMIVectorL = Read(0xFFFA);
@@ -149,15 +149,15 @@ void CPU::IRQHandler()
     if (GetFlag(Flag::I))
         return;
 
-    // set interrupt disable flag
-    SetFlag(Flag::I, true);
-
     // clear break flag
     SetFlag(Flag::B, false);
 
     Write(stackBase + (uint16_t)S--, PC >> 8U & 0xFF);    // push PCH on stack
     Write(stackBase + (uint16_t)S--, PC & 0xFF);          // push PCL on stack
     Write(stackBase + (uint16_t)S--, P.reg);              // push processor status register on stack
+
+    // set interrupt disable flag
+    SetFlag(Flag::I, true);
 
     // get IRQ vector
     uint8_t IRQVectorL = Read(0xFFFE);
@@ -492,15 +492,15 @@ void CPU::BRK()
     // increment program counter
     PC++;
 
-    // set interrupt disable flag
-    SetFlag(Flag::I, true);
-
     // set break flag
     SetFlag(Flag::B, true);
 
     Write(stackBase + (uint16_t)S--, PC >> 8 & 0x00FF);     // push PCH on stack
     Write(stackBase + (uint16_t)S--, PC & 0x00FF);          // push PCL on stack
     Write(stackBase + (uint16_t)S--, P.reg);                // push processor status register on stack (B is set)
+
+    // set interrupt disable flag
+    SetFlag(Flag::I, true);
 
     // clear break flag
     SetFlag(Flag::B, false);

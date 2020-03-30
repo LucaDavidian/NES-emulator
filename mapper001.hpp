@@ -30,6 +30,7 @@ private:
     uint8_t mappedPRGBank32;
     uint8_t mappedPRGBank16Low;
     uint8_t mappedPRGBank16High;
+
     uint8_t mappedCHRBank8;
     uint8_t mappedCHRBank4Low;
     uint8_t mappedCHRBank4High;

@@ -26,7 +26,7 @@ void NES::Initialize()
 	/**** iNES mapper 001 games ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble.nes");
 	//cartridge->LoadRom("ROMs/The Legend of Zelda.nes");	
-	//cartridge->LoadRom("ROMs/Zelda II.nes");
+	cartridge->LoadRom("ROMs/Zelda II.nes");
 
 	/**** iNES mapper 002 games ****/
 	//cartridge->LoadRom("ROMs/Duck Tales.nes");
@@ -36,7 +36,7 @@ void NES::Initialize()
 
 	/**** iNES mapper 004 games ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble Part 2.nes");
-	cartridge->LoadRom("ROMs/Double Dragon II.nes");
+	//cartridge->LoadRom("ROMs/Double Dragon II.nes");
 
 	bus.InsertCartridge(cartridge);
 

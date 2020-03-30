@@ -10,8 +10,11 @@ void Mapper001::Reset()
     PRGBankMode = PRGBankMode::FIX_HIGH_BANK;
     CHRBankMode = CHRBankMode::SWITCH_4KB;
 
+    mappedPRGBank32 = 0;
     mappedPRGBank16Low = 0;
     mappedPRGBank16High = numBanksPRG - 1;
+
+    mappedCHRBank8 = 0;
     mappedCHRBank4Low = 0;
     mappedCHRBank4High = 0;
 
@@ -51,7 +54,7 @@ uint32_t Mapper001::MapWritePRG(uint16_t address, uint8_t data, bool &toRAM)
 
     uint32_t mappedAddress = 0x00000000;
 
-    if (PRG_RAM_Enable && address >= 0x6000 && address <= 0x7FFFF)  // 8 KiB PRG RAM (optional)
+    if (PRG_RAM_Enable && address >= 0x6000 && address <= 0x7FFF)  // 8 KiB PRG RAM (optional)
     {
         mappedAddress = address & 0x1FFF;
         toRAM = true;
@@ -114,7 +117,7 @@ uint32_t Mapper001::MapWritePRG(uint16_t address, uint8_t data, bool &toRAM)
                 else if (!(address & 0x4000) && (address & 0x2000))   // CHR bank 0: address 0xA000 - 0xBFFF, bit 14 == 0, bit 13 == 1
                 {
                     if (CHRBankMode == CHRBankMode::SWITCH_8KB)
-                        mappedCHRBank8 = internalRegister >> 1;
+                        mappedCHRBank8 = internalRegister & 0x1E;
                     else if (CHRBankMode == CHRBankMode::SWITCH_4KB)
                         mappedCHRBank4Low = internalRegister;
                 }
@@ -126,7 +129,7 @@ uint32_t Mapper001::MapWritePRG(uint16_t address, uint8_t data, bool &toRAM)
                 else if ((address & 0x4000) && (address & 0x2000))    // PRG bank: address 0xE000 - 0xFFFF, bit 14 == 1, bit 13 == 1
                 {
                     if (PRGBankMode == PRGBankMode::SWITCH_32KB)
-                        mappedPRGBank32 = internalRegister >> 1 & 0x07;
+                        mappedPRGBank32 = internalRegister & 0x0E;
                     else if (PRGBankMode == PRGBankMode::FIX_LOW_BANK)
                     {
                         mappedPRGBank16Low = 0;
@@ -138,7 +141,7 @@ uint32_t Mapper001::MapWritePRG(uint16_t address, uint8_t data, bool &toRAM)
                         mappedPRGBank16High = numBanksPRG - 1;
                     }
 
-                    PRG_RAM_Enable = internalRegister & 0x10;
+                    PRG_RAM_Enable = !(internalRegister & 0x10);
                 }
             }
         }
@@ -152,12 +155,12 @@ uint32_t Mapper001::MapReadCHR(uint16_t address)
     uint32_t mappedAddress = 0x00000000;
 
     if (CHRBankMode == CHRBankMode::SWITCH_4KB)
-        if (address <= 0x0FFF)   // 0x0000 - 0x0FFF
-            mappedAddress = mappedCHRBank4Low * 0x1000 + address;
-        else                     // 0x1000 - 0x1FFF
+        if (address <= 0x0FFF)                          // 0x0000 - 0x0FFF
+            mappedAddress = mappedCHRBank4Low * 0x1000 + (address & 0x0FFF);
+        else                                            // 0x1000 - 0x1FFF
             mappedAddress = mappedCHRBank4High * 0x1000 + (address & 0x0FFF);
-    else if (CHRBankMode == CHRBankMode::SWITCH_8KB)
-        mappedAddress = mappedCHRBank4Low * 0x2000 + address;
+    else if (CHRBankMode == CHRBankMode::SWITCH_8KB)    // 0x0000 - 0x1FFF
+        mappedAddress = mappedCHRBank8 * 0x2000 + (address & 0x1FFF);
 
     return mappedAddress;
 }
@@ -167,12 +170,12 @@ uint32_t Mapper001::MapWriteCHR(uint16_t address)
     uint32_t mappedAddress = 0x00000000;
 
     if (CHRBankMode == CHRBankMode::SWITCH_4KB)
-        if (address <= 0x0FFF)   // 0x0000 - 0x0FFF
-            mappedAddress = mappedCHRBank4Low * 0x1000 + address;
-        else                     // 0x1000 - 0x1FFF
+        if (address <= 0x0FFF)                          // 0x0000 - 0x0FFF
+            mappedAddress = mappedCHRBank4Low * 0x1000 + (address & 0x0FFF);
+        else                                            // 0x1000 - 0x1FFF
             mappedAddress = mappedCHRBank4High * 0x1000 + (address & 0x0FFF);
-    else if (CHRBankMode == CHRBankMode::SWITCH_8KB)
-        mappedAddress = mappedCHRBank4Low * 0x2000 + address;
+    else if (CHRBankMode == CHRBankMode::SWITCH_8KB)    // 0x0000 - 0x1FFF
+        mappedAddress = mappedCHRBank8 * 0x2000 + (address & 0x1FFF);
 
     return mappedAddress;
 }

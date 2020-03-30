@@ -589,10 +589,10 @@ void PPU::Clock()
 	Color pixelColor = paletteColors[Read(0x3F00 + paletteIndex) & 0x3F];
 	screen->SetPixel(cycle - 1, scanline, pixelColor.red, pixelColor.green, pixelColor.blue);
 
-	cycle++;                   // increment PPU cycle count
-
 	if (cycle == 260 && (scanline >= 0 && scanline <= 239 || scanline == 261))
 		cartridge->CountPPUScanline();
+
+	cycle++;                   // increment PPU cycle count
 
 	if (cycle == 341)          // 341 cycles in a scanline (0-- 340)
 	{
@@ -602,7 +602,7 @@ void PPU::Clock()
 		if (scanline == 262)   // 262 scanlines in a frame (0 - 261)
 		{
 			scanline = 0;
-			frameComplete = true;       /*  DisplayBackground();*/
+			frameComplete = true;         //DisplayBackground();
 		}
 	}
 }

@@ -40,14 +40,16 @@ void Cartridge::LoadRom(const std::string &ROMFilePath)
         ROMFile.seekg(512, std::ios::cur);
 
     nBanksPRG = header.nBanksPRG; 
-    PRG_ROM.Resize(nBanksPRG * 16384);   // a bank of program memory is 16 KiB
+    PRG_ROM.Resize(nBanksPRG * 0x4000);   // a bank of program memory is 16 KiB
     ROMFile.read((char*)PRG_ROM.Data(), PRG_ROM.Size());
     
     nBanksCHR = header.nBanksCHR;  
     if (nBanksCHR == 0)
         nBanksCHR = 1;
-    CHR_ROM.Resize(nBanksCHR * 8192);   // a bank of character memory is 8 KiB
+    CHR_ROM.Resize(nBanksCHR * 0x2000);   // a bank of character memory is 8 KiB
     ROMFile.read((char*)CHR_ROM.Data(), CHR_ROM.Size());
+
+    PRG_RAM.Resize(0x2000);     // 8 KiB of PRG RAM (optional)
 
     mapperID = header.flags7 & 0xF0 | header.flags6 >> 4; 
 
