@@ -8,7 +8,7 @@ class AudioSystem
 {
 private:
 	using Callback = void (*)();
-	using RingBuffer = RingBuffer<int16_t,512>;
+	using RingBuffer = RingBuffer<int16_t,1024>;
 public:
 	static AudioSystem &GetInstance();
 

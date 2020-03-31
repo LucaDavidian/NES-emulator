@@ -2,169 +2,153 @@
 #define APU_H
 
 #include <cstdint>
-#include <cmath>
 
 class APU
 {
 public:
-	APU();
-
 	void Reset();
 	void Clock();
 
 	void WriteRegister(uint16_t address, uint8_t data);
 	uint8_t ReadRegister(uint16_t address);
 
-	int16_t GetAudioSample() const;
+	int16_t GetAudioOutput() const;
 private:
-	/**** APU sub units ****/
-	struct WaveformSequencer
-	{
-		uint16_t timer = 0x0000;             // 11-bit timer unit (sets the wave frequency)
-		uint16_t timerLoad = 0x0000;         // timer reload value
+	uint64_t systemClockCount = 0;
+	
+	double frameCounter = 0.0;
+	enum class FrameCounterMode { FOUR_STEP, FIVE_STEP } frameCounterMode;
 
-		uint8_t sequence = 0x00;             // waveform sequencer/generator sequence (sets the wave duty cycle)
-		uint8_t sequencer = 0x00;            // 8-bit waveform sequencer/generator
+	uint8_t lengthCounterLookupTable[32]{ 10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30 };
 
-		void Clock()
+	/**** APU channels ****/
+	struct PulseWaveChannel                 // pulse wave channels 1 and 2
+	{ 
+		uint16_t timer;                     // 11-bit timer
+		uint16_t timerReload;
+
+		void ClockTimer()
 		{
 			timer--;
 
-			if (timer == 0xFFFF)   // timer underflow
+			if (timer == 0xFFFF)            // timer underflow 
 			{
-				sequencer = (sequencer & 0xFE) >> 1 | (sequencer & 0x01) << 7;    // rotate sequencer pattern
-				timer = timerLoad;                                                // reload timer 
-			}
+				timer = timerReload;        // reload value and clock wave generator
+				ClockSequencer();                                                                 // TODO: timer < 8 --> silcence channel
+			}	
 		}
 
-		uint8_t Value() const
+		uint8_t lengthCounter;              // 5-bit length counter 
+		uint8_t lengthCounterReload;
+		bool lengthCounterHaltFlag;
+		bool lengthCounterEnabled;
+
+		void ClockLengthCounter()
+		{
+			if (!lengthCounterHaltFlag && lengthCounter > 0)
+				lengthCounter--;
+		}	
+
+		bool constantVolume;                // constant volume/envelope select
+		uint8_t volume;                     // constant volume
+		
+		uint8_t envelopeDivider;            // 4-bit envelope
+		uint8_t envelopeDividerReload;
+		bool envelopeLoopFlag;
+
+		void ClockEnvelope()
+		{
+
+		}
+
+		bool sweepEnabled;                  // sweeper 
+		uint8_t sweepDivider;
+		bool sweepNegated;
+		uint8_t sweepShiftCount;
+		bool sweepReloadFlag;
+
+		void ClockSweeper()
+		{
+
+		}
+
+		uint8_t sequencer;                  // waveform sequencer/generatror
+		uint8_t sequence;
+		double dutyCycle;
+
+		void ClockSequencer()
+		{
+			sequencer = sequencer >> 1 | (sequencer & 0x01) << 7;
+		}
+
+		uint8_t GetOutput() const
 		{
 			return (sequencer & 0x80) >> 7;
 		}
-	};
 
-	// frame counter/ sequencer
-	uint8_t frameCounterMode;   // frame sequencer mode - 0: 4-step sequence, 1: 5-step sequence
-	uint16_t doubleFrameCounter;
+	} pulseWave1, pulseWave2;
 
-	struct LengthCounter
+	struct TriangleWaveChannel              // triangle wave channel
 	{
-		bool enabled = false;
-		bool halted = true;             // halt length counter
-		uint8_t count = 0x00;           // 8-bit length counter unit
+		uint16_t timer;                     // 11-bit timer
+		uint16_t timerReload;
 
-		void Clock()
+		void ClockTimer()
 		{
-			if (!halted && count)     // TODO: update status register
-				count--;
+			timer--;
+
+			if (timer == 0xFFFF)            // timer underflow 
+			{
+				timer = timerReload;        // reload value
+
+				if (linearCounter > 0 && lengthCounter > 0)  // if linear counter and length counter are not zero clock wave generator
+					ClockSequencer();
+			}
 		}
-	};
+		
+		uint8_t lengthCounter;              // 5-bit length counter 
+		uint8_t lengthCounterReload;
+		bool lengthCounterHaltFlag;
+		bool lengthCounterEnabled;
 
-	struct Envelope
-	{
-
-	};
-
-	struct Sweeper
-	{
-		Sweeper(uint16_t &timer, uint8_t channel) : timer(timer), channel(channel) {}
-
-		uint8_t channel;
-		bool enabled;
-		uint8_t reloadValue;             // sweep divider relod value P - sweep period is P + 1
-		uint8_t divider;                 // 4-bit sweep divider
-		bool negated;
-		uint8_t shift;
-		bool mute;
-		uint16_t &timer;
-
-		void Clock()
+		void ClockLengthCounter()
 		{
-			if (enabled)
-				if (negated)
-				{
-					if (timer < 8)
-						mute = true;
-					else
-					{
-						timer -= timer >> shift;
-
-						if (channel == 2)
-							timer -= 1;
-
-						mute = false;
-					}
-				}
-				else   // not negated
-				{
-					uint16_t targetPeriod = timer + (timer >> shift);    
-
-					if (targetPeriod & 0xF800)
-						mute = true;
-					else
-					{
-						timer += timer >> shift;
-						mute = false;
-					}
-				}
+			if (!lengthCounterHaltFlag && lengthCounter > 0)
+				lengthCounter--;
 		}
-	};
 
-	/**** pulse wave channel 1 and 2 ****/
-	struct PulseWaveChannel
-	{
-		PulseWaveChannel(uint8_t channel) : sweeper(waveformSequencer.timer, channel) {}
+		uint8_t linearCounter;              // 7-bit linear counter
+		uint8_t linearCounterReload;
+		bool linearCounterReloadFlag;
+		bool linearCounterControlFlag;
 
-		WaveformSequencer waveformSequencer;
-		LengthCounter lengthCounter;
-		Sweeper sweeper;
+		void ClockLinearCounter()
+		{
+			if (linearCounterReloadFlag)
+				linearCounter = linearCounterReload;
+			else if (linearCounter > 0)
+				linearCounter--;
 
-		bool usingEnvelope;
-		uint8_t envelope;                     // 4-bit envelope unit
-		uint8_t volume;                       // 4-bit constant volume
-		double output;                        // channel output
+			if (!linearCounterControlFlag)
+				linearCounterReloadFlag = false;
+		}
 
-	} pulseWave1{1}, pulseWave2{2};           // pulse wave channel 1 and 2
+		uint8_t sequencer[32]{ 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };   // waveform sequencer/generator
+		uint8_t sequenceIndex = 0;
 
-	uint8_t lengthCounterLookupTable[32];
+		void ClockSequencer()
+		{
+			sequenceIndex++;
 
-	uint64_t systemClockCount;
+			if (sequenceIndex == 32)
+				sequenceIndex = 0;
+		}
 
-	/**** oscillators ****/
-	//struct SquareWaveOscillator
-	//{
-	//	uint16_t frequency;
-	//	uint16_t amplitude = 1;
-	//	double dutyCycle;                     // wave duty cycle - 0: 12.5%, 1: 25%, 2: 50%, 3: 25% (inverted)
-	//	double harmonics = 20;
-
-	//	double Sample(double t)
-	//	{
-	//		double a = 0;
-	//		double b = 0;
-	//		double p = dutyCycle * 2.0 * 3.14159;
-
-	//		auto approxsin = [](float t)
-	//		{
-	//			float j = t * 0.15915;
-	//			j = j - (int)j;
-	//			return 20.785 * j * (j - 0.5) * (j - 1.0f);
-	//		};
-
-	//		for (double n = 1; n < harmonics; n++)
-	//		{
-	//			double c = n * frequency * 2.0 * 3.14159 * t;
-	//			a += -approxsin(c) / n;
-	//			b += -approxsin(c - p * n) / n;
-
-	//			/*a += -sin(c) / n;
-	//			b += -sin(c - p * n) / n;*/
-	//		}
-
-	//		return (2.0 * amplitude / 3.14159) * (a - b);
-	//	}
-
-	//} squareWaveOscillator;   // TODO: one oscillator per channel?
+		uint8_t GetOutput() const
+		{
+			return sequencer[sequenceIndex];
+		}
+	} triangleWave;
 };
 
 #endif  // APU_H

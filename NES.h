@@ -17,7 +17,7 @@ public:
 	void Clock();
 	bool FrameComplete() { return ppu.FrameComplete(); }
 	Screen &GetScreen() { return screen; }
-	int16_t GetAudioSample() { return apu.GetAudioSample(); }
+	int16_t GetAudioSample() { return apu.GetAudioOutput(); }
 private:
 	Bus bus;
 	CPU cpu;

@@ -1,244 +1,240 @@
 #include "APU.hpp"
 
-APU::APU() : lengthCounterLookupTable{ 10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30 }
+int16_t APU::GetAudioOutput() const
 {
+	int16_t pulse1 = pulseWave1.lengthCounter ? 200 * pulseWave1.volume * ((int16_t)pulseWave1.GetOutput() * 2 - 1) : 0;
+	int16_t pulse2 = pulseWave2.lengthCounter ? 200 * pulseWave2.volume * ((int16_t)pulseWave2.GetOutput() * 2 - 1) : 0;
+	
+	int16_t triangle = triangleWave.lengthCounter ? 200 * ((int16_t)triangleWave.GetOutput() - 7) : 0;
 
+	return pulse1 + pulse2 + triangle;
 }
 
 void APU::Reset()
 {
-	systemClockCount = 0;
-	doubleFrameCounter = 0;
+
 }
 
-void APU::Clock()  // called every CPU clock
+void APU::Clock()  // called every PPU clock
 {
-	if (systemClockCount % 3 == 0)  // frame counter is clocked every other CPU clock, but we keep double the frame counts (CPU clock resolution)
+	if (systemClockCount % 3 == 0)    // every CPU clock - every 3 PPU clocks 
 	{
-		if (frameCounterMode == 0)  // 4-step sequence mode
+		triangleWave.ClockTimer();   // triangle wave timer is clocked every CPU clock
+
+		if (systemClockCount % 6 == 0)   // every other CPU clock - every 6 PPU clocks
 		{
-			if (doubleFrameCounter == 3728 * 2 + 1)
-				;
-			else if (doubleFrameCounter == 7456 * 2 + 1)
-			{
-				pulseWave1.lengthCounter.Clock(); 
-				pulseWave1.sweeper.Clock();
-
-				pulseWave2.lengthCounter.Clock();
-				pulseWave2.sweeper.Clock();
-			}
-			else if (doubleFrameCounter == 11185 * 2 + 1)
-				;
-			else if (doubleFrameCounter == 14914 * 2 + 1)
-			{
-				pulseWave1.lengthCounter.Clock();
-				pulseWave1.sweeper.Clock(); 
-
-				pulseWave2.lengthCounter.Clock();
-				pulseWave2.sweeper.Clock();
-			}
-
-			doubleFrameCounter++;
-
-			if (doubleFrameCounter == 14915 * 2)
-				doubleFrameCounter = 0;
-		}
-		else // 5-step sequence mode
-		{
-			if (doubleFrameCounter == 3728 * 2 + 1)
-				;
-			else if (doubleFrameCounter == 7456 * 2 + 1)
-			{
-				pulseWave1.lengthCounter.Clock();
-				pulseWave1.sweeper.Clock();
-
-				pulseWave2.lengthCounter.Clock(); 
-				pulseWave2.sweeper.Clock();
-			}
-			else if (doubleFrameCounter == 11185 * 2 + 1)
-				;
-			else if (doubleFrameCounter == 14914 * 2 + 1)
-				;
-			else if (doubleFrameCounter == 18640 * 2 + 1)
-			{
-				pulseWave1.lengthCounter.Clock(); 
-				pulseWave1.sweeper.Clock(); 
-
-				pulseWave2.lengthCounter.Clock();
-				pulseWave2.sweeper.Clock();
-			}
-
-			doubleFrameCounter++;
-
-			if (doubleFrameCounter == 18641 * 2)
-				doubleFrameCounter = 0;
+			pulseWave1.ClockTimer();     //pulse wave timer is clocked every APU clock (every other CPU clock)
+			pulseWave2.ClockTimer();
 		}
 
-		if (systemClockCount % 6 == 0)  // APU clock == CPU clock / 2 == PPU clock / 6
+		if (frameCounterMode == FrameCounterMode::FOUR_STEP)
 		{
-			// pulse wave channel 1		
-			pulseWave1.waveformSequencer.Clock();    // wave period is (timerLoad + 1) * 8 * 2 / CPUfreq
+			if (frameCounter == 3728.5)
+			{
+				triangleWave.ClockLinearCounter();
+			}
+			else if (frameCounter == 7456.5)
+			{
+				triangleWave.ClockLinearCounter();
+				triangleWave.ClockLengthCounter();
+			}
+			else if (frameCounter == 11185.5)
+			{
+				triangleWave.ClockLinearCounter();
+			}
+			else if (frameCounter == 14914)
+				;
+			else if (frameCounter == 14914.5)
+			{
+				triangleWave.ClockLinearCounter();
+				triangleWave.ClockLengthCounter();
+			}
+			else if (frameCounter == 14915)
+				frameCounter = 0.0;
 
-			if (pulseWave1.lengthCounter.count && pulseWave1.waveformSequencer.timer > 8 && !pulseWave1.sweeper.mute)
-				pulseWave1.output = pulseWave1.waveformSequencer.Value();   // audio pin output
-			else
-				pulseWave1.output = 0x00;
-
-			// pulse wave channel 2
-			pulseWave2.waveformSequencer.Clock();    // wave period is 8 * (timerLoad + 1) * 8 * 2 / CPUfreq
-
-			if (pulseWave2.lengthCounter.count && pulseWave2.waveformSequencer.timer > 8 && !pulseWave2.sweeper.mute)
-				pulseWave2.output = pulseWave2.waveformSequencer.Value();   // audio pin output
-			else
-				pulseWave2.output = 0x00;
 		}
+		else if (frameCounterMode == FrameCounterMode::FIVE_STEP)
+		{
+			if (frameCounter == 3728.5)
+			{
+				triangleWave.ClockLinearCounter();
+			}
+			else if (frameCounter == 7456.5)
+			{
+				triangleWave.ClockLinearCounter();
+				triangleWave.ClockLengthCounter();
+			}
+			else if (frameCounter == 11185.5)
+			{
+				triangleWave.ClockLinearCounter();
+			}
+			else if (frameCounter == 14914.5)
+				;
+			else if (frameCounter == 18640.5)
+			{
+				triangleWave.ClockLinearCounter();
+				triangleWave.ClockLengthCounter();
+			}
+			else if (frameCounter == 18641)
+				frameCounter = 0.0;
+		}
+
+		frameCounter += 0.5;  // frame couter incremented every CPU clock
 	}
 
-	systemClockCount++;             // number of PPU clocks
+	systemClockCount++;
 }
 
-int16_t APU::GetAudioSample() const 
-{ 
-	return 1000 * (pulseWave1.output - 0.5) * 2.0 + 1000 * (pulseWave2.output - 0.5) * 2.0;
-}
-
-// APU registers are write-only (apart from status register 0x4015)
 void APU::WriteRegister(uint16_t address, uint8_t data)
 {
 	switch (address)
 	{
-		// pulse wave channel 1
-		case 0x4000:
+		case 0x4000:            // square pulse wave channel 1
 			pulseWave1.volume = data & 0x0F;
-			pulseWave1.usingEnvelope = data & 0x10;
-			pulseWave1.lengthCounter.halted = data & 0x20;
+			pulseWave1.envelopeDivider = data & 0x0F;
+			pulseWave1.constantVolume = data & 0x10;
+			pulseWave1.lengthCounterHaltFlag = data & 0x20;
 			switch ((data & 0xC0) >> 6)
 			{
 				case 0:
-					//squareWaveOscillator.dutyCycle = 0.125;
-					pulseWave1.waveformSequencer.sequence = 0x40;  // 0100.0000
+					pulseWave1.sequence = 0x40;  // 0100.0000
+					pulseWave1.dutyCycle = 0.125;
 					break;
 				case 1:
-					//squareWaveOscillator.dutyCycle = 0.25;
-					pulseWave1.waveformSequencer.sequence = 0x60;  // 0110.0000
+					pulseWave1.sequence = 0x60;  // 0110.0000
+					pulseWave1.dutyCycle = 0.25;
 					break;
 				case 2:
-					//squareWaveOscillator.dutyCycle = 0.50;
-					pulseWave1.waveformSequencer.sequence = 0x78;  // 0111.1000
+					pulseWave1.sequence = 0x78;  // 0111.1000
+					pulseWave1.dutyCycle = 0.50;
 					break;
 				case 3:
-					//squareWaveOscillator.dutyCycle = 0.750;
-					pulseWave1.waveformSequencer.sequence = 0x9F;  // 1001.1111
+					pulseWave1.sequence = 0x9F;  // 1001.1111
+					pulseWave1.dutyCycle = 0.75;
 					break;
 			}
 			break;
 		case 0x4001:
-			pulseWave1.sweeper.shift = data & 0x07;
-			pulseWave1.sweeper.negated = data & 0x08;
-			pulseWave1.sweeper.reloadValue = (data & 0x70) >> 4;
-			pulseWave1.sweeper.enabled = data & 0x80;
-			// reload flag
+			pulseWave1.sweepShiftCount = 0x07;
+			pulseWave1.sweepNegated = 0x08;
+			pulseWave1.sweepDivider = 0x70;
+			pulseWave1.sweepEnabled = data & 0x80;
+			pulseWave1.sweepReloadFlag = true;
 			break;
 		case 0x4002:
-			pulseWave1.waveformSequencer.timerLoad = pulseWave1.waveformSequencer.timerLoad & 0xFF00 | data;
+			pulseWave1.timerReload = pulseWave1.timerReload & 0xFF00 | data;
 			break;
 		case 0x4003:
-			pulseWave1.waveformSequencer.timerLoad = pulseWave1.waveformSequencer.timerLoad & 0x00FF | (uint16_t)(data & 0x07) << 8;
-			//pulseWave1.waveformSequencer.timer = pulseWave1.waveformSequencer.timerLoad;
-			if (pulseWave1.lengthCounter.enabled)
-				pulseWave1.lengthCounter.count = lengthCounterLookupTable[(data & 0xF8) >> 3];     // load length counter from lookup table
-			pulseWave1.waveformSequencer.sequencer = pulseWave1.waveformSequencer.sequence;        // reset the phase of the wave generator/sequencer
-			// restart envelope
+			pulseWave1.timerReload = pulseWave1.timerReload & 0x00FF | (uint16_t)(data & 0x07) << 8;
+			pulseWave1.lengthCounterReload = (data & 0xF8) >> 3;
+			if (pulseWave1.lengthCounterEnabled)
+				pulseWave1.lengthCounter = lengthCounterLookupTable[pulseWave1.lengthCounterReload];  // length couunter is reloaded (if enabled)
+			pulseWave1.sequencer = pulseWave1.sequence;                                               // sequencer is restarted
+																	     	                          // envelope is restarted
 			break;
-		// pulse wave channel 2
-		case 0x4004:
+		case 0x4004:            // square pulse wave channel 2
 			pulseWave2.volume = data & 0x0F;
-			pulseWave2.usingEnvelope = data & 0x10;
-			pulseWave2.lengthCounter.halted = data & 0x20;
+			pulseWave2.envelopeDivider = data & 0x0F;
+			pulseWave2.constantVolume = data & 0x10;
+			pulseWave2.lengthCounterHaltFlag = data & 0x20;
 			switch ((data & 0xC0) >> 6)
 			{
 			case 0:
-				//squareWaveOscillator.dutyCycle = 0.125;
-				pulseWave2.waveformSequencer.sequence = 0x40;  // 0100.0000
+				pulseWave2.sequence = 0x40;  // 0100.0000
+				pulseWave2.dutyCycle = 0.125;
 				break;
 			case 1:
-				//squareWaveOscillator.dutyCycle = 0.25;
-				pulseWave2.waveformSequencer.sequence = 0x60;  // 0110.0000
+				pulseWave2.sequence = 0x60;  // 0110.0000
+				pulseWave2.dutyCycle = 0.25;
 				break;
 			case 2:
-				//squareWaveOscillator.dutyCycle = 0.50;
-				pulseWave2.waveformSequencer.sequence = 0x78;  // 0111.1000
+				pulseWave2.sequence = 0x78;  // 0111.1000
+				pulseWave2.dutyCycle = 0.50;
 				break;
 			case 3:
-				//squareWaveOscillator.dutyCycle = 0.750;
-				pulseWave2.waveformSequencer.sequence = 0x9F;  // 1001.1111
+				pulseWave2.sequence = 0x9F;  // 1001.1111
+				pulseWave2.dutyCycle = 0.75;
 				break;
 			}
 			break;
 		case 0x4005:
-			pulseWave2.sweeper.shift = data & 0x07;
-			pulseWave2.sweeper.negated = data & 0x08;
-			pulseWave2.sweeper.reloadValue = (data & 0x70) >> 4;
-			pulseWave2.sweeper.enabled = data & 0x80;
+			pulseWave2.sweepShiftCount = 0x07;
+			pulseWave2.sweepNegated = 0x08;
+			pulseWave2.sweepDivider = 0x70;
+			pulseWave2.sweepEnabled = data & 0x80;
+			pulseWave2.sweepReloadFlag = true;
 			break;
 		case 0x4006:
-			pulseWave2.waveformSequencer.timerLoad = pulseWave2.waveformSequencer.timerLoad & 0xFF00 | data;
+			pulseWave2.timerReload = pulseWave2.timerReload & 0xFF00 | data;
 			break;
 		case 0x4007:
-			pulseWave2.waveformSequencer.timerLoad = pulseWave2.waveformSequencer.timerLoad & 0x00FF | (uint16_t)(data & 0x07) << 8;
-			//pulseWave2.waveformSequencer.timer = pulseWave2.waveformSequencer.timerLoad;
-			if (pulseWave2.lengthCounter.enabled) 
-				pulseWave2.lengthCounter.count = lengthCounterLookupTable[(data & 0xF8) >> 3];    // load length counter from look up table
-			pulseWave2.waveformSequencer.sequencer = pulseWave2.waveformSequencer.sequence;       // reset the phase of the wave generator/sequencer
-			// restart evelope
+			pulseWave2.timerReload = pulseWave2.timerReload & 0x00FF | (uint16_t)(data & 0x07) << 8;
+			pulseWave2.lengthCounterReload = (data & 0xF8) >> 3;
+			if (pulseWave2.lengthCounterEnabled)
+				pulseWave2.lengthCounter = lengthCounterLookupTable[pulseWave2.lengthCounterReload];  // length couunter is reloaded (if enabled)
+			pulseWave2.sequencer = pulseWave2.sequence;                                               // sequencer is restarted
+																									  // envelope is restarted
 			break;
-		// triangle wave channel 
-		case 0x4008:
-			break;
-		case 0x4009:
+		case 0x4008:            // triangle wave channel
+			triangleWave.linearCounterReload = data & 0x7F;
+			triangleWave.linearCounterControlFlag = data & 0x80;
+			triangleWave.lengthCounterHaltFlag = data & 0x80;
 			break;
 		case 0x400A:
+			triangleWave.timerReload = triangleWave.timerReload & 0xFF00 | data;
 			break;
 		case 0x400B:
+			triangleWave.timerReload = triangleWave.timerReload & 0x00FF | (uint16_t)(data & 0x07) << 8;
+			triangleWave.lengthCounterReload = (data & 0xF8) >> 3;
+			if (triangleWave.lengthCounterEnabled)
+				triangleWave.lengthCounter = lengthCounterLookupTable[triangleWave.lengthCounterReload];
+			triangleWave.linearCounterReloadFlag = true;
 			break;
-		// noise channel 
-		case 0x400C:
-			break;
-		case 0x400D:
+		case 0x400C:            // noise channel
 			break;
 		case 0x400E:
 			break;
 		case 0x400F:
 			break;
-		// DMC - delta modulation channel
-		case 0x4010:
+		case 0x4010:            // DMC - delta modulation channel
 			break;
 		case 0x4011:
 			break;
 		case 0x4012:
 			break;
-		case 0x4013:
+		case 0x40013:
 			break;
-		// status register
-		case 0x4015:
-			if (data & 0x01)  // enable pulse wave 1
-				pulseWave1.lengthCounter.enabled = true;
-			else  // disable pulse wave 1
+		case 0x4015:   // status register
+			// enable pulse wave channel 1 length counter
+			if (!(data & 0x01))
 			{
-				pulseWave1.lengthCounter.enabled = false;
-				pulseWave1.lengthCounter.count = 0x00;  // set pulse wave 1 length counter to zero   
+				pulseWave1.lengthCounterEnabled = false;
+				pulseWave1.lengthCounter = 0x00;
 			}
-			if (data & 0x02)  // enable pulse wave 2
-				pulseWave2.lengthCounter.enabled = true;
-			else  // disable pulse wave 2 
+			else
+				pulseWave1.lengthCounterEnabled = true;
+
+			// enable pulse wave channel 2 length counter
+			if (!(data & 0x02))
 			{
-				pulseWave2.lengthCounter.count = 0x00;  // set pulse wave 2 length counter to zero   
-				pulseWave2.lengthCounter.enabled = false;
+				pulseWave2.lengthCounterEnabled = false;
+				pulseWave2.lengthCounter = 0x00;
 			}
+			else
+				pulseWave2.lengthCounterEnabled = true;
+
+			// enable triangle wave channel length counter
+			if (!(data & 0x04))
+			{
+				triangleWave.lengthCounterEnabled = false;
+				triangleWave.lengthCounter = 0x00;
+			}
+			else
+				triangleWave.lengthCounterEnabled = true;
+			
 			break;
-		// frame counter register
-		case 0x4017:
-			frameCounterMode = data & 0x80 ? 1 : 0;
+		case 0x4017:            // frame counter register
+			frameCounterMode = data & 0x80 ? FrameCounterMode::FIVE_STEP : FrameCounterMode::FOUR_STEP;
 			break;
 	}
 }
@@ -249,9 +245,48 @@ uint8_t APU::ReadRegister(uint16_t address)
 
 	switch (address)
 	{
-		default:
+		case 0x4000:            // square pulse wave channel 1
+			break;
+		case 0x4001:
+			break;
+		case 0x4002:
+			break;
+		case 0x4003:
+			break;
+		case 0x4004:            // square pulse wave channel 2
+			break;
+		case 0x4005:
+			break;
+		case 0x4006:
+			break;
+		case 0x4007:
+			break;
+		case 0x4008:            // triangle wave channel
+			break;
+		case 0x400A:
+			break;
+		case 0x400B:
+			break;
+		case 0x400C:            // noise channel
+			break;
+		case 0x400E:
+			break;
+		case 0x400F:
+			break;
+		case 0x4010:            // DMC - delta modulation channel
+			break;
+		case 0x4011:
+			break;
+		case 0x4012:
+			break;
+		case 0x40013:
+			break;
+		case 0x4015:            // status register
+			break;
+		case 0x4017:            // frame counter register
 			break;
 	}
 
 	return data;
 }
+
