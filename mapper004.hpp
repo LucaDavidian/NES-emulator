@@ -3,7 +3,7 @@
 
 #include "mapper.hpp"
 
-/**** iNES mapper 004 ****/
+/**** iNES mapper 004 (MMC3) ****/
 class Mapper004 : public Mapper
 {
 public:

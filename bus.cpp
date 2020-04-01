@@ -76,7 +76,7 @@ void Bus::Clock()      // TODO: CPU should be done with instruction before trigg
 {
     ppu->Clock();   
 
-    apu->Clock();      // APU clock == CPU clock / 2
+    apu->Clock();      
 
     if (systemClockCount % 3 == 0)                    // CPU clock = PPU clock / 3, DMA and CPU share same clock
         if (DMAActive)                                // if DMA is active, suspend CPU

@@ -602,7 +602,7 @@ void PPU::Clock()
 		if (scanline == 262)   // 262 scanlines in a frame (0 - 261)
 		{
 			scanline = 0;
-			frameComplete = true;         //DisplayBackground();
+			frameComplete = true;        //DisplayBackground();
 		}
 	}
 }
@@ -728,11 +728,15 @@ uint8_t PPU::Read(uint16_t address)
 		}
 		else if (cartridge->GetMirroringMode() == MirroringMode::SINGLE_SCREEN_LOWER)
 		{
+			address &= 0x03FF;
 
+			data = VRAM[0][address];
 		}
 		else if (cartridge->GetMirroringMode() == MirroringMode::SINGLE_SCREEN_UPPER)
 		{
+			address &= 0x03FF;
 
+			data = VRAM[1][address];
 		}
 	}
 	else if (address >= 0x3F00 && address <= 0x3FFF)      // 32 bytes palette memory
@@ -784,11 +788,15 @@ void PPU::Write(uint16_t address, uint8_t data)
 		}
 		else if (cartridge->GetMirroringMode() == MirroringMode::SINGLE_SCREEN_LOWER)
 		{
+			address &= 0x03FF;
 
+			VRAM[0][address] = data;
 		}
 		else if (cartridge->GetMirroringMode() == MirroringMode::SINGLE_SCREEN_UPPER)
 		{
+			address &= 0x03FF;
 
+			VRAM[1][address] = data;
 		}
 	}
 	else if (address >= 0x3F00 && address <= 0x3FFF)       // 32 bytes palette memory
