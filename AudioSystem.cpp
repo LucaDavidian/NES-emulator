@@ -12,7 +12,7 @@ AudioSystem &AudioSystem::GetInstance()
 AudioSystem::AudioSystem()
 {
 	SDL_AudioSpec audioDevice;
-	audioDevice.freq = 48000;                // sample rate 
+	audioDevice.freq = 44100;                // sample rate 
 	audioDevice.format = AUDIO_S16SYS;       // bit depth 
 	audioDevice.samples = 512;               // number of sample frames (one sample frame contains as many samples as channels)
 	audioDevice.channels = 1;                // number of channels (one:mono, two: stereo)

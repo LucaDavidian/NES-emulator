@@ -97,13 +97,36 @@ private:
 
 		void UpdateSweeper()
 		{
+			uint16_t changeAmount = timerReload >> sweeperShiftCount;
 
+			if (sweeperNegated)
+			{
+				changeAmount = -changeAmount;
+
+				if (channel == 1)
+					changeAmount -= 1;
+			}
+
+			sweeperTargetPeriod = timerReload + changeAmount;
 		}
 
 		void ClockSweeper()
 		{
+			if (sweeperTargetPeriod > 0x07FF || timerReload < 8)
+				sweeperEnabled = false;
 
+			if (sweeperDivider == 0 && sweeperEnabled && !sweeperSilenced)  // shift count > 0
+				timerReload = sweeperTargetPeriod;
 
+			if (sweeperDivider == 0 || sweeperReloadFlag)
+			{
+				sweeperDivider = sweeperDividerReload;
+
+				if (sweeperReloadFlag)
+					sweeperReloadFlag = false;
+			}
+			else
+				sweeperDivider--;
 		}
 
 		uint8_t sequencer;                  // waveform sequencer/generatror

@@ -30,135 +30,135 @@ void APU::Clock()  // called every PPU clock
 		triangleWaveChannel.ClockTimer();   // triangle wave channel timer is clocked every CPU clock
 		noiseChannel.ClockTimer();          // noise channel timer is clocked every CPU clock 
 
+		if (frameCounterMode == FrameCounterMode::FOUR_STEP)
+		{
+			if (frameCounter == 3728.5)
+			{
+				// quarter frame: clock envelopes and triangle wave linear counter
+				pulseWaveChannel1.ClockEnvelope();
+				pulseWaveChannel2.ClockEnvelope();
+				noiseChannel.ClockEnvelope();
+
+				triangleWaveChannel.ClockLinearCounter();
+			}
+			else if (frameCounter == 7456.5)
+			{
+				// quarter frame : clock envelopes and triangle wave linear counter
+				pulseWaveChannel1.ClockEnvelope();
+				pulseWaveChannel2.ClockEnvelope();
+				noiseChannel.ClockEnvelope();
+
+				triangleWaveChannel.ClockLinearCounter();
+
+				// half frame: clock length counters and sweeper units
+				pulseWaveChannel1.ClockLengthCounter();
+				pulseWaveChannel2.ClockLengthCounter();
+				triangleWaveChannel.ClockLengthCounter();
+				noiseChannel.ClockLengthCounter();
+
+				pulseWaveChannel1.ClockSweeper();
+				pulseWaveChannel2.ClockSweeper();
+			}
+			else if (frameCounter == 11185.5)
+			{
+				// quarter frame : clock envelopes and triangle wave linear counter
+				pulseWaveChannel1.ClockEnvelope();
+				pulseWaveChannel2.ClockEnvelope();
+				noiseChannel.ClockEnvelope();
+
+				triangleWaveChannel.ClockLinearCounter();
+			}
+			else if (frameCounter == 14914)
+				;
+			else if (frameCounter == 14914.5)
+			{
+				// quarter frame : clock envelopes and triangle wave linear counter
+				pulseWaveChannel1.ClockEnvelope();
+				pulseWaveChannel2.ClockEnvelope();
+				noiseChannel.ClockEnvelope();
+
+				triangleWaveChannel.ClockLinearCounter();
+
+				// half frame: clock length counters and sweeper units
+				pulseWaveChannel1.ClockLengthCounter();
+				pulseWaveChannel2.ClockLengthCounter();
+				triangleWaveChannel.ClockLengthCounter();
+				noiseChannel.ClockLengthCounter();
+
+				pulseWaveChannel1.ClockSweeper();
+				pulseWaveChannel2.ClockSweeper();
+			}
+			else if (frameCounter == 14915)
+				frameCounter = 0.0;
+
+		}
+		else if (frameCounterMode == FrameCounterMode::FIVE_STEP)
+		{
+			if (frameCounter == 3728.5)
+			{
+				// quarter frame : clock envelopes and triangle wave linear counter
+				pulseWaveChannel1.ClockEnvelope();
+				pulseWaveChannel2.ClockEnvelope();
+				noiseChannel.ClockEnvelope();
+
+				triangleWaveChannel.ClockLinearCounter();
+			}
+			else if (frameCounter == 7456.5)
+			{
+				// quarter frame : clock envelopes and triangle wave linear counter
+				pulseWaveChannel1.ClockEnvelope();
+				pulseWaveChannel2.ClockEnvelope();
+				noiseChannel.ClockEnvelope();
+
+				triangleWaveChannel.ClockLinearCounter();
+
+				// half frame: clock length counters and sweeper units
+				pulseWaveChannel1.ClockLengthCounter();
+				pulseWaveChannel2.ClockLengthCounter();
+				triangleWaveChannel.ClockLengthCounter();
+				noiseChannel.ClockLengthCounter();
+
+				pulseWaveChannel1.ClockSweeper();
+				pulseWaveChannel2.ClockSweeper();
+			}
+			else if (frameCounter == 11185.5)
+			{
+				// quarter frame : clock envelopes and triangle wave linear counter
+				pulseWaveChannel1.ClockEnvelope();
+				pulseWaveChannel2.ClockEnvelope();
+				noiseChannel.ClockEnvelope();
+
+				triangleWaveChannel.ClockLinearCounter();
+			}
+			else if (frameCounter == 14914.5)
+				;
+			else if (frameCounter == 18640.5)
+			{
+				// quarter frame : clock envelopes and triangle wave linear counter
+				pulseWaveChannel1.ClockEnvelope();
+				pulseWaveChannel2.ClockEnvelope();
+				noiseChannel.ClockEnvelope();
+
+				triangleWaveChannel.ClockLinearCounter();
+
+				// half frame: clock length counters and sweeper units
+				pulseWaveChannel1.ClockLengthCounter();
+				pulseWaveChannel2.ClockLengthCounter();
+				triangleWaveChannel.ClockLengthCounter();
+				noiseChannel.ClockLengthCounter();
+
+				pulseWaveChannel1.ClockSweeper();
+				pulseWaveChannel2.ClockSweeper();
+			}
+			else if (frameCounter == 18641)
+				frameCounter = 0.0;
+		}
+
 		if (systemClockCount % 6 == 0)      // every other CPU clock - every 6 PPU clocks
 		{
 			pulseWaveChannel1.ClockTimer();     //pulse wave channel timer is clocked every APU clock (every other CPU clock)
-			pulseWaveChannel2.ClockTimer();	
-		}		
-	}
-
-	if (frameCounterMode == FrameCounterMode::FOUR_STEP)
-	{
-		if (frameCounter == 3728.5)
-		{
-			// quarter frame: clock envelopes and triangle wave linear counter
-			pulseWaveChannel1.ClockEnvelope();
-			pulseWaveChannel2.ClockEnvelope();
-			noiseChannel.ClockEnvelope();
-
-			triangleWaveChannel.ClockLinearCounter();
+			pulseWaveChannel2.ClockTimer();
 		}
-		else if (frameCounter == 7456.5)
-		{
-			// quarter frame : clock envelopes and triangle wave linear counter
-			pulseWaveChannel1.ClockEnvelope();
-			pulseWaveChannel2.ClockEnvelope();
-			noiseChannel.ClockEnvelope();
-
-			triangleWaveChannel.ClockLinearCounter();
-
-			// half frame: clock length counters and sweeper units
-			pulseWaveChannel1.ClockLengthCounter();
-			pulseWaveChannel2.ClockLengthCounter();
-			triangleWaveChannel.ClockLengthCounter();
-			noiseChannel.ClockLengthCounter();
-
-			pulseWaveChannel1.ClockSweeper();
-			pulseWaveChannel2.ClockSweeper();
-		}
-		else if (frameCounter == 11185.5)
-		{
-			// quarter frame : clock envelopes and triangle wave linear counter
-			pulseWaveChannel1.ClockEnvelope();
-			pulseWaveChannel2.ClockEnvelope();
-			noiseChannel.ClockEnvelope();
-
-			triangleWaveChannel.ClockLinearCounter();
-		}
-		else if (frameCounter == 14914)
-			;
-		else if (frameCounter == 14914.5)
-		{
-			// quarter frame : clock envelopes and triangle wave linear counter
-			pulseWaveChannel1.ClockEnvelope();
-			pulseWaveChannel2.ClockEnvelope();
-			noiseChannel.ClockEnvelope();
-
-			triangleWaveChannel.ClockLinearCounter();
-
-			// half frame: clock length counters and sweeper units
-			pulseWaveChannel1.ClockLengthCounter();
-			pulseWaveChannel2.ClockLengthCounter();
-			triangleWaveChannel.ClockLengthCounter();
-			noiseChannel.ClockLengthCounter();
-
-			pulseWaveChannel1.ClockSweeper();
-			pulseWaveChannel2.ClockSweeper();
-		}
-		else if (frameCounter == 14915)
-			frameCounter = 0.0;
-
-	}
-	else if (frameCounterMode == FrameCounterMode::FIVE_STEP)
-	{
-		if (frameCounter == 3728.5)
-		{
-			// quarter frame : clock envelopes and triangle wave linear counter
-			pulseWaveChannel1.ClockEnvelope();
-			pulseWaveChannel2.ClockEnvelope();
-			noiseChannel.ClockEnvelope();
-
-			triangleWaveChannel.ClockLinearCounter();
-		}
-		else if (frameCounter == 7456.5)
-		{
-			// quarter frame : clock envelopes and triangle wave linear counter
-			pulseWaveChannel1.ClockEnvelope();
-			pulseWaveChannel2.ClockEnvelope();
-			noiseChannel.ClockEnvelope();
-
-			triangleWaveChannel.ClockLinearCounter();
-
-			// half frame: clock length counters and sweeper units
-			pulseWaveChannel1.ClockLengthCounter();
-			pulseWaveChannel2.ClockLengthCounter();
-			triangleWaveChannel.ClockLengthCounter();
-			noiseChannel.ClockLengthCounter();
-
-			pulseWaveChannel1.ClockSweeper();
-			pulseWaveChannel2.ClockSweeper();
-		}
-		else if (frameCounter == 11185.5)
-		{
-			// quarter frame : clock envelopes and triangle wave linear counter
-			pulseWaveChannel1.ClockEnvelope();
-			pulseWaveChannel2.ClockEnvelope();
-			noiseChannel.ClockEnvelope();
-
-			triangleWaveChannel.ClockLinearCounter();
-		}
-		else if (frameCounter == 14914.5)
-			;
-		else if (frameCounter == 18640.5)
-		{
-			// quarter frame : clock envelopes and triangle wave linear counter
-			pulseWaveChannel1.ClockEnvelope();
-			pulseWaveChannel2.ClockEnvelope();
-			noiseChannel.ClockEnvelope();
-
-			triangleWaveChannel.ClockLinearCounter();
-
-			// half frame: clock length counters and sweeper units
-			pulseWaveChannel1.ClockLengthCounter();
-			pulseWaveChannel2.ClockLengthCounter();
-			triangleWaveChannel.ClockLengthCounter();
-			noiseChannel.ClockLengthCounter();
-
-			pulseWaveChannel1.ClockSweeper();
-			pulseWaveChannel2.ClockSweeper();
-		}
-		else if (frameCounter == 18641)
-			frameCounter = 0.0;
 	}
 
 	systemClockCount++;

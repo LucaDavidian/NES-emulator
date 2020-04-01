@@ -85,8 +85,8 @@ void Game::UpdateState()
 
 void Game::UpdateStateSyncWithAudio()
 {
-	double cyclesPerBuffer = 5.369318 * 1000000 * 512 / 48000;
-	double cyclesPerSample = cyclesPerBuffer / 512;
+	double cyclesPerSample = 5.369318 * 1000000 / 44100;  // PPU frequency == 5.369318 MHz
+	double cyclesPerBuffer = cyclesPerSample * 512;
 
 	double cyclesDone = 0.0;
 

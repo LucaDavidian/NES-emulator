@@ -19,9 +19,9 @@ void NES::Initialize()
 	/**** iNES mapper 000 games ****/
 	//cartridge->LoadRom("ROMs/nestest.nes");
 	//cartridge->LoadRom("ROMs/Ice Climber.nes");	
-	//cartridge->LoadRom("ROMs/Super Mario Bros.nes");
+	cartridge->LoadRom("ROMs/Super Mario Bros.nes");
 	//cartridge->LoadRom("ROMs/Donkey Kong.nes");
-	cartridge->LoadRom("ROMs/Donkey Kong 3.nes");
+	//cartridge->LoadRom("ROMs/Donkey Kong 3.nes");
 
 	/**** iNES mapper 001 games ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble.nes");
