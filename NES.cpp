@@ -19,7 +19,7 @@ void NES::Initialize()
 	/**** iNES mapper 000 games ****/
 	//cartridge->LoadRom("ROMs/nestest.nes");
 	//cartridge->LoadRom("ROMs/Ice Climber.nes");	
-	cartridge->LoadRom("ROMs/Super Mario Bros.nes");
+	//cartridge->LoadRom("ROMs/Super Mario Bros.nes");
 	//cartridge->LoadRom("ROMs/Donkey Kong.nes");
 	//cartridge->LoadRom("ROMs/Donkey Kong 3.nes");
 
@@ -33,7 +33,7 @@ void NES::Initialize()
 	//cartridge->LoadRom("ROMs/Mega Man II.nes");
 
 	/**** iNES mapper 002 games ****/
-	//cartridge->LoadRom("ROMs/DuckTales.nes");
+	cartridge->LoadRom("ROMs/DuckTales.nes");
 	//cartridge->LoadRom("ROMs/DuckTales 2.nes");
 	//cartridge->LoadRom("ROMs/Castlevania.nes");
 

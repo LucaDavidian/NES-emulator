@@ -287,7 +287,7 @@ void APU::WriteRegister(uint16_t address, uint8_t data)
 			break;
 		case 0x4012:
 			break;
-		case 0x40013:
+		case 0x4013:
 			break;
 		case 0x4015:   // status register
 			// enable pulse wave channel 1 length counter
@@ -373,7 +373,7 @@ uint8_t APU::ReadRegister(uint16_t address)
 			break;
 		case 0x4012:
 			break;
-		case 0x40013:
+		case 0x4013:
 			break;
 		case 0x4015:            // status register
 			break;

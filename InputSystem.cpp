@@ -1,9 +1,9 @@
 #include "InputSystem.h"
-#include "Controller.h"
+#include "controller.h"
 
 InputSystem &InputSystem::GetInstance()
 {
-	InputSystem instance;
+	static InputSystem instance;
 
 	return instance;
 }
