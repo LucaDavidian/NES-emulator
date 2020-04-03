@@ -22,6 +22,7 @@ void NES::Initialize()
 	//cartridge->LoadRom("ROMs/Super Mario Bros.nes");
 	//cartridge->LoadRom("ROMs/Donkey Kong.nes");
 	//cartridge->LoadRom("ROMs/Donkey Kong 3.nes");
+	//cartridge->LoadRom("ROMs/Burger Time.nes");
 
 	/**** iNES mapper 001 games ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble.nes");
@@ -33,7 +34,7 @@ void NES::Initialize()
 	//cartridge->LoadRom("ROMs/Mega Man II.nes");
 
 	/**** iNES mapper 002 games ****/
-	cartridge->LoadRom("ROMs/DuckTales.nes");
+	//cartridge->LoadRom("ROMs/DuckTales.nes");
 	//cartridge->LoadRom("ROMs/DuckTales 2.nes");
 	//cartridge->LoadRom("ROMs/Castlevania.nes");
 
@@ -43,7 +44,7 @@ void NES::Initialize()
 	/**** iNES mapper 004 games ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble Part 2.nes");
 	//cartridge->LoadRom("ROMs/Double Dragon II.nes");
-	//cartridge->LoadRom("ROMs/Super Mario Bros 3.nes");
+	cartridge->LoadRom("ROMs/Super Mario Bros 3.nes");
 
 	bus.InsertCartridge(cartridge);
 

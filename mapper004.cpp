@@ -13,13 +13,22 @@ void Mapper004::Reset()
 
     IRQEnabled = false;
     IRQReload = 0x00;
-    IRQLatch = 0x00;
+    IRQCounter = 0x00;
     interruptAsserted = false;
 
     mappedPRGBank0 = 0;
     mappedPRGBank1 = 1;
     mappedPRGBank2 = numBanksPRG - 2;
     mappedPRGBank3 = numBanksPRG - 1;
+
+    mappedCHRBank0 = 0;
+    mappedCHRBank1 = 0;
+    mappedCHRBank2 = 0;
+    mappedCHRBank3 = 0;
+    mappedCHRBank4 = 0;
+    mappedCHRBank5 = 0;
+
+    bankSelect = 0;
 }
 
 uint32_t Mapper004::MapReadPRG(uint16_t address, bool &fromRAM)
@@ -98,7 +107,7 @@ uint32_t Mapper004::MapWritePRG(uint16_t address, uint8_t data, bool &toRAM)
             case 6:
                 if (PRGBankMode == PRGBankMode::FIXED0)
                     mappedPRGBank2 = data & 0x3F;
-                else
+                else if (PRGBankMode == PRGBankMode::FIXED2)
                     mappedPRGBank0 = data & 0x3F;
                 break;
             case 7:
@@ -108,9 +117,9 @@ uint32_t Mapper004::MapWritePRG(uint16_t address, uint8_t data, bool &toRAM)
     }
     else if (address >= 0xA000 && address <= 0xBFFF)
     {
-        if (!(address & 0x0001))  // even address:
+        if (!(address & 0x0001))  // even address: mirroring mode
             mirroringMode = data & 0x01 ? MirroringMode::HORIZONTAL : MirroringMode::VERTICAL;
-        else                      // odd address:
+        else                      // odd address: PRG RAM protect
         {
             writeProtection = data & 0x40;
             PRG_RAM_Enabled = data & 0x80;
@@ -118,19 +127,19 @@ uint32_t Mapper004::MapWritePRG(uint16_t address, uint8_t data, bool &toRAM)
     }
     else if (address >= 0xC000 && address <= 0xDFFF)
     {
-        if (!(address & 0x0001))  // even address:
+        if (!(address & 0x0001))  // even address: set IRQ reload value
             IRQReload = data;
-        else                      // odd address:
-            IRQLatch = 0x00;      // reload IRQ counter at cycle 260 of scanline
+        else                      // odd address: reload IRQ counter
+            IRQCounter = 0x00;    // reload IRQ counter at cycle 260 of scanline
     }
     else if (address >= 0xE000 && address <= 0xFFFF)
     {
-        if (!(address & 0x0001))  // even address:
+        if (!(address & 0x0001))  // even address: disable IRQ
         {
             IRQEnabled = false;
             interruptAsserted = false;
         }
-        else                      // odd address:
+        else                      // odd address: enable IRQ
             IRQEnabled = true;
     }
 
@@ -215,13 +224,13 @@ uint32_t Mapper004::MapWriteCHR(uint16_t address)
 
 void Mapper004::CountPPUScanline()
 {
-    if (IRQLatch)
-        IRQLatch--;
-    else   // IRQLatch has reached 0
+    if (IRQCounter == 0x00)
     {
-        IRQLatch = IRQReload;
+        IRQCounter = IRQReload;
 
         if (IRQEnabled)
             interruptAsserted = true;
     }
+    else 
+        IRQCounter--;
 }

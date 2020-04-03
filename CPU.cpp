@@ -50,53 +50,6 @@ bool CPU::GetFlag(Flag flag)
     return P.reg & 1 << static_cast<unsigned>(flag);
 }
 
-void CPU::Clock()
-{
-    // CPU is processing the instruction
-    if (currentInstructionCycles)
-    {
-        currentInstructionCycles--;
-        return;
-    }
-
-    if (NMIPending)
-    {
-        NMIHandler();
-        NMIPending = false;
-
-        return;
-    }
-
-    if (IRQPending)
-    {
-        IRQHandler();
-        IRQPending = false;
-
-        return;
-    }
-
-    opcode = Read(PC++);                                   // FETCH opcode and increment Program Counter
-
-    Instruction instruction = instructionTable[opcode];    // DECODE instruction
-
-    currentInstructionCycles = instruction.CPUcycles;      // set instruction cycles (instructions can add cycles)
-
-    (this->*instruction.addressingMode)();                 // get address 
-    (this->*instruction.instructionHandler)();             // EXECUTE instructions (add cycles if necessary)    
-
-    if (pageCrossed)
-        pageCrossed = false;
-    
-    totalCycles += currentInstructionCycles;
-
-    currentInstructionCycles--;
-}
-
-bool CPU::InstructionComplete()
-{
-    return currentInstructionCycles == 0;
-}
-
 void CPU::Reset()
 {
     A = 0x00;
@@ -122,15 +75,16 @@ void CPU::Reset()
 }
 
 void CPU::NMIHandler()
-{   
+{
+    Write(stackBase + (uint16_t)S--, PC >> 8 & 0x00FF);     // push PCH on stack
+    Write(stackBase + (uint16_t)S--, PC & 0x00FF);          // push PCL on stack
+    
     // clear break flag
     SetFlag(Flag::B, false);
+    
+    Write(stackBase + (uint16_t)S--, P.reg);                // push processor status register (with B flag clear) on stack
 
-    Write(stackBase + (uint16_t)S--, PC >> 8 & 0xFF);     // push PCH on stack
-    Write(stackBase + (uint16_t)S--, PC & 0xFF);          // push PCL on stack
-    Write(stackBase + (uint16_t)S--, P.reg);              // push processor status register on stack
-
-     // set interrupt disable flag
+    // set interrupt disable flag
     SetFlag(Flag::I, true);
 
     // get NMI vector
@@ -149,12 +103,13 @@ void CPU::IRQHandler()
     if (GetFlag(Flag::I))
         return;
 
+    Write(stackBase + (uint16_t)S--, PC >> 8 & 0x00FF);     // push PCH on stack
+    Write(stackBase + (uint16_t)S--, PC & 0x00FF);          // push PCL on stack
+
     // clear break flag
     SetFlag(Flag::B, false);
 
-    Write(stackBase + (uint16_t)S--, PC >> 8U & 0xFF);    // push PCH on stack
-    Write(stackBase + (uint16_t)S--, PC & 0xFF);          // push PCL on stack
-    Write(stackBase + (uint16_t)S--, P.reg);              // push processor status register on stack
+    Write(stackBase + (uint16_t)S--, P.reg);                // push processor status register (with B flag clear) on stack
 
     // set interrupt disable flag
     SetFlag(Flag::I, true);
@@ -167,6 +122,56 @@ void CPU::IRQHandler()
 
     // jump to IRQ vector
     PC = IRQVector;
+}
+
+bool CPU::InstructionComplete()
+{
+    return currentInstructionCycles == 0;
+}
+
+void CPU::Clock()
+{
+    // CPU is processing the instruction
+    if (currentInstructionCycles)
+    {
+        currentInstructionCycles--;
+        return;
+    }
+
+    if (NMIPending)
+    {
+        NMIHandler();
+        NMIPending = false;
+
+        return;
+    }
+
+    if (IRQPending)
+    {
+        //if (GetFlag(Flag::I))
+        //    return;
+
+        IRQHandler();
+        IRQPending = false;
+
+        return;
+    }
+
+    opcode = Read(PC++);                                   // FETCH opcode and increment Program Counter
+
+    Instruction instruction = instructionTable[opcode];    // DECODE instruction
+
+    currentInstructionCycles = instruction.CPUcycles;      // set instruction cycles (instructions can add cycles)
+
+    (this->*instruction.addressingMode)();                 // get address 
+    (this->*instruction.instructionHandler)();             // EXECUTE instructions (add cycles if necessary)    
+
+    if (pageCrossed)
+        pageCrossed = false;
+    
+    totalCycles += currentInstructionCycles;
+
+    currentInstructionCycles--;
 }
 
 /**** addressing modes ****/

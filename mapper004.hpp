@@ -35,19 +35,19 @@ private:
     uint8_t mappedPRGBank2;   // PRG ROM bank @ 0xC000 - 0xDFFF
     uint8_t mappedPRGBank3;   // PRG ROM bank @ 0xE000 - 0xFFFF
 
-    uint8_t mappedCHRBank0 = 0;
-    uint8_t mappedCHRBank1 = 0;
-    uint8_t mappedCHRBank2 = 0;
-    uint8_t mappedCHRBank3 = 0;
-    uint8_t mappedCHRBank4 = 0;
-    uint8_t mappedCHRBank5 = 0;
+    uint8_t mappedCHRBank0;
+    uint8_t mappedCHRBank1;
+    uint8_t mappedCHRBank2;
+    uint8_t mappedCHRBank3;
+    uint8_t mappedCHRBank4;
+    uint8_t mappedCHRBank5;
 
     bool PRG_RAM_Enabled;
     bool writeProtection;
 
     bool IRQEnabled;
+    uint8_t IRQCounter;       // IRQ counter
     uint8_t IRQReload;        // number of PPU scanlines before firing interrupt
-    uint8_t IRQLatch;         // downcounter
     bool interruptAsserted;
 };
 

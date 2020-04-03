@@ -188,6 +188,8 @@ void PPU::ShiftBackgroundRegisters()
 
 void PPU::Clock()
 {
+	static uint8_t address12;
+
 	if (scanline >= 0 && scanline <= 239)              // visible frame
 	{
 		/**************** background rendering ********************/
@@ -478,7 +480,7 @@ void PPU::Clock()
 					{
 						if (spriteAttribute[cycle - 257 >> 3] & 0x80)  // vertical flip
 							spriteTileY = 7 - spriteTileY;
-	
+
 						spriteTileBaseAddress = controlRegister.bits.spritePatternTable * 0x1000 + (spriteTileID << 4) + spriteTileY;
 					}
 					else                                // 8x16px sprite
@@ -535,14 +537,17 @@ void PPU::Clock()
 
 	if (maskRegister.bits.renderBackground)
 	{
-		uint16_t pixelMask = 0x8000 >> fineX;
-		uint8_t paletteMask = 0x80 >> fineX;
+		if (maskRegister.bits.showBackgroundLeft || cycle > 8)
+		{
+			uint16_t pixelMask = 0x8000 >> fineX;
+			uint8_t paletteMask = 0x80 >> fineX;
 
-		backgroundPixel |= (backgroundShiftRegisterLow & pixelMask) >> 15 - fineX;
-		backgroundPixel |= (backgroundShiftRegisterHigh & pixelMask) >> 15 - fineX << 1 ;
+			backgroundPixel |= (backgroundShiftRegisterLow & pixelMask) >> 15 - fineX;
+			backgroundPixel |= (backgroundShiftRegisterHigh & pixelMask) >> 15 - fineX << 1;
 
-		backgroundPalette |= (attributeShiftRegisterLow & paletteMask) >> 7 - fineX;
-		backgroundPalette |= (attributeShiftRegisterHigh & paletteMask) >> 7 - fineX << 1;
+			backgroundPalette |= (attributeShiftRegisterLow & paletteMask) >> 7 - fineX;
+			backgroundPalette |= (attributeShiftRegisterHigh & paletteMask) >> 7 - fineX << 1;
+		}
 	}
 
 	uint8_t spritePixel = 0x00;
@@ -551,24 +556,27 @@ void PPU::Clock()
 	
 	if (maskRegister.bits.renderSprites)
 	{
-		for (int i = 0; i < spriteCountScanline; i++)
+		if (maskRegister.bits.showSpritesLeft || cycle > 8)
 		{
-			if (spriteXCounter[i] == -1)
+			for (int i = 0; i < spriteCountScanline; i++)
 			{
-				spritePixel |= (spriteShiftRegisterLow[i] & 0x80) >> 7;
-				spritePixel |= (spriteShiftRegisterHigh[i] & 0x80) >> 6;
-
-				spritePalette = (spriteAttribute[i] & 0x03);
-				spritePalette += 0x04;  // sprite palettes 
-
-				spritePriority = spriteAttribute[i] & 0x20;
-				
-				if (spritePixel != 0)  // if sprite pixel is opaque exit loop, else keep looking for other sprites
+				if (spriteXCounter[i] == -1)
 				{
-					if (spriteZeroOnScanline && i == 0)
-						statusRegister.bits.spriteZeroHit = 1;
+					spritePixel |= (spriteShiftRegisterLow[i] & 0x80) >> 7;
+					spritePixel |= (spriteShiftRegisterHigh[i] & 0x80) >> 6;
 
-					break;
+					spritePalette = (spriteAttribute[i] & 0x03);
+					spritePalette += 0x04;  // sprite palettes 
+
+					spritePriority = spriteAttribute[i] & 0x20;
+
+					if (spritePixel != 0)  // if sprite pixel is opaque exit loop, else keep looking for other sprites
+					{
+						if (spriteZeroOnScanline && i == 0)
+							statusRegister.bits.spriteZeroHit = 1;
+
+						break;
+					}
 				}
 			}
 		}
@@ -589,9 +597,6 @@ void PPU::Clock()
 	Color pixelColor = paletteColors[Read(0x3F00 + paletteIndex) & 0x3F];
 	screen->SetPixel(cycle - 1, scanline, pixelColor.red, pixelColor.green, pixelColor.blue);
 
-	if (cycle == 260 && (scanline >= 0 && scanline <= 239 || scanline == 261))
-		cartridge->CountPPUScanline();
-
 	cycle++;                   // increment PPU cycle count
 
 	if (cycle == 341)          // 341 cycles in a scanline (0-- 340)
@@ -602,7 +607,7 @@ void PPU::Clock()
 		if (scanline == 262)   // 262 scanlines in a frame (0 - 261)
 		{
 			scanline = 0;
-			frameComplete = true;        //DisplayBackground();
+			frameComplete = true;       //DisplayBackground();
 		}
 	}
 }
