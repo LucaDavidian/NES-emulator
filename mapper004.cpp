@@ -1,6 +1,7 @@
 #include "mapper004.hpp"
 
 /**** iNES mapper 004 (MMC3) ****/
+
 void Mapper004::Reset()
 {
     mirroringMode = MirroringMode::HORIZONTAL;

@@ -1,0 +1,206 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_NES2EDIT            ICON                    "nes2edit.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_INESHEADER DIALOGEX 0, 0, 272, 188
+STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_ACCEPTFILES
+CAPTION "iNES Header Editor"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    RTEXT           "ROM Filename:",IDC_STATIC,4,4,68,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_INES_NAME,76,4,136,12,ES_AUTOHSCROLL | ES_READONLY
+    DEFPUSHBUTTON   "&Browse...",IDC_INES_BROWSE,216,4,52,12
+    CONTROL         "Standard iNES",IDC_INES_VER1,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,4,20,104,8
+    CONTROL         "NES 2.0",IDC_INES_VER2,"Button",BS_AUTORADIOBUTTON,112,
+                    20,156,8
+    GROUPBOX        "",IDC_STATIC,4,32,104,152
+    RTEXT           "Mapper Number:",IDC_STATIC,12,44,60,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_INES_MAP,76,44,24,12,ES_NUMBER
+    RTEXT           "PRG ROM Banks:",IDC_STATIC,12,60,60,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_INES_PRG,76,60,24,12,ES_NUMBER
+    RTEXT           "CHR ROM Banks:",IDC_STATIC,12,76,60,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_INES_CHR,76,76,24,12,ES_NUMBER
+    CONTROL         "Horizontal Mirroring",IDC_INES_HORIZ,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,12,92,88,8
+    CONTROL         "Vertical Mirroring",IDC_INES_VERT,"Button",
+                    BS_AUTORADIOBUTTON,12,104,88,8
+    CONTROL         "VS Unisystem",IDC_INES_VS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,12,116,88,8
+    CONTROL         "Playchoice-10",IDC_INES_PC10,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,12,128,88,8
+    CONTROL         "4-screen VRAM",IDC_INES_4SCR,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,12,144,88,8
+    CONTROL         "Battery-backed SRAM",IDC_INES_BATT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,12,156,88,8
+    CONTROL         "Trainer",IDC_INES_TRAIN,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,12,168,88,8
+    GROUPBOX        "",IDC_STATIC,112,32,156,132
+    RTEXT           "Submapper:",IDC_STATIC,120,44,44,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_INES_SUBMAP,168,44,20,12,ES_NUMBER
+    CTEXT           "(battery)",IDC_STATIC,216,44,44,12,SS_CENTERIMAGE
+    RTEXT           "PRG RAM:",IDC_STATIC,120,60,44,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_INES_PRAM,168,60,44,256,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_INES_PSAV,216,60,44,256,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "CHR RAM:",IDC_STATIC,120,76,44,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_INES_CRAM,168,76,44,256,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_INES_CSAV,216,76,44,256,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "NTSC",IDC_INES_NTSC,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,120,92,44,8
+    CONTROL         "PAL",IDC_INES_PAL,"Button",BS_AUTORADIOBUTTON,168,92,44,
+                    8
+    CONTROL         "Dual",IDC_INES_DUAL,"Button",BS_AUTORADIOBUTTON,216,92,
+                    44,8
+    RTEXT           "VS PPU:",IDC_STATIC,120,116,44,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_INES_VSPPU,168,116,92,256,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "VS Flags:",IDC_STATIC,120,144,44,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_INES_VSFLAG,168,144,92,256,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "&Apply",IDOK,112,168,44,16
+    PUSHBUTTON      "&Close",IDCLOSE,168,168,44,16
+    PUSHBUTTON      "E&xit",IDCANCEL,224,168,44,16
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_INESHEADER, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 268
+        VERTGUIDE, 4
+        VERTGUIDE, 12
+        VERTGUIDE, 72
+        VERTGUIDE, 76
+        VERTGUIDE, 100
+        VERTGUIDE, 108
+        VERTGUIDE, 112
+        VERTGUIDE, 120
+        VERTGUIDE, 164
+        VERTGUIDE, 168
+        VERTGUIDE, 212
+        VERTGUIDE, 216
+        VERTGUIDE, 260
+        VERTGUIDE, 268
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 184
+        HORZGUIDE, 4
+        HORZGUIDE, 16
+        HORZGUIDE, 20
+        HORZGUIDE, 28
+        HORZGUIDE, 32
+        HORZGUIDE, 44
+        HORZGUIDE, 56
+        HORZGUIDE, 60
+        HORZGUIDE, 72
+        HORZGUIDE, 76
+        HORZGUIDE, 88
+        HORZGUIDE, 92
+        HORZGUIDE, 100
+        HORZGUIDE, 104
+        HORZGUIDE, 112
+        HORZGUIDE, 116
+        HORZGUIDE, 124
+        HORZGUIDE, 128
+        HORZGUIDE, 136
+        HORZGUIDE, 144
+        HORZGUIDE, 152
+        HORZGUIDE, 156
+        HORZGUIDE, 164
+        HORZGUIDE, 168
+        HORZGUIDE, 176
+        HORZGUIDE, 184
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

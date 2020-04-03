@@ -1,8 +1,7 @@
 #include "mapper001.hpp"
 
 /**** mapper 001 (MMC1) ****/
-// PRG 256/512 KiB
-// CHR 128 KiB
+
 void Mapper001::Reset()
 {
     PRG_RAM_Enable = false;

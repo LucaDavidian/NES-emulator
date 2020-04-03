@@ -7,7 +7,7 @@
 class Mapper002 : public Mapper
 {
 public:
-    Mapper002(uint8_t numBanksPRG, uint8_t numBanksCHR) : Mapper(numBanksPRG, numBanksCHR), mappedPRGBank(0) {}
+    Mapper002(uint8_t numBanksPRG, uint8_t numBanksCHR) : Mapper(numBanksPRG, numBanksCHR), mappedPRGBank(0) { Reset(); }
 
     void Reset() override {}
 

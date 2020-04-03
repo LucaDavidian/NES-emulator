@@ -48,6 +48,7 @@ private:
     bool IRQEnabled;
     uint8_t IRQCounter;       // IRQ counter
     uint8_t IRQReload;        // number of PPU scanlines before firing interrupt
+    bool IRQCounterReloadFlag = false;
     bool interruptAsserted;
 };
 

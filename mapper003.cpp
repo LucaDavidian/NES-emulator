@@ -1,8 +1,7 @@
 #include "mapper003.hpp"
 
 /**** iNES mapper 003 ****/
-// PRG 16/32 KiB 
-// CHR 32 KiB 
+
 uint32_t Mapper003::MapReadPRG(uint16_t address, bool &fromRAM)
 {
     uint32_t mappedAddress = 0x00000000;

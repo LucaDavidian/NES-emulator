@@ -33,8 +33,6 @@ public:
     void Clock();
     bool InstructionComplete();
 
-    /**** debugging ****/
-    std::map<uint16_t,std::string> Disassemble(int startAddress, int endAddress);
 private:
     void NMIHandler();
     void IRQHandler();

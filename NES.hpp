@@ -7,7 +7,7 @@
 #include "APU.hpp"
 #include "cartridge.hpp"
 #include "screen.hpp"
-#include "controller.h"
+#include "controller.hpp"
 
 class NES
 {

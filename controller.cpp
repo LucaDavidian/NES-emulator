@@ -1,4 +1,4 @@
-#include "controller.h"
+#include "controller.hpp"
 #include "SDL.h"
 
 Controller::Controller() : state{}

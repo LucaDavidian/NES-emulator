@@ -1,4 +1,4 @@
-#include "NES.h"
+#include "NES.hpp"
 #include "screen.hpp"
 
 NES::NES() : cpu(bus), cartridge(nullptr)
@@ -16,15 +16,20 @@ void NES::Initialize()
 
 	Cartridge *cartridge = new Cartridge;
 
-	/**** iNES mapper 000 games ****/
-	//cartridge->LoadRom("ROMs/nestest.nes");
+	/**** test ROMS ****/
+	//cartridge->LoadRom("ROMs/tests/cpu_timing_test.nes");
+	//cartridge->LoadRom("ROMs/tests/nestest.nes");
+
+	/**** iNES mapper 000 ****/
+	
 	//cartridge->LoadRom("ROMs/Ice Climber.nes");	
 	//cartridge->LoadRom("ROMs/Super Mario Bros.nes");
-	//cartridge->LoadRom("ROMs/Donkey Kong.nes");
+	cartridge->LoadRom("ROMs/Donkey Kong.nes");
 	//cartridge->LoadRom("ROMs/Donkey Kong 3.nes");
+	//cartridge->LoadRom("ROMs/Balloon Fight.nes");
 	//cartridge->LoadRom("ROMs/Burger Time.nes");
 
-	/**** iNES mapper 001 games ****/
+	/**** iNES mapper 001 ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble.nes");
 	//cartridge->LoadRom("ROMs/The Legend of Zelda.nes");	
 	//cartridge->LoadRom("ROMs/Zelda II.nes");
@@ -33,18 +38,22 @@ void NES::Initialize()
 	//cartridge->LoadRom("ROMs/Double Dragon.nes");
 	//cartridge->LoadRom("ROMs/Mega Man II.nes");
 
-	/**** iNES mapper 002 games ****/
+	/**** iNES mapper 002 ****/
 	//cartridge->LoadRom("ROMs/DuckTales.nes");
 	//cartridge->LoadRom("ROMs/DuckTales 2.nes");
 	//cartridge->LoadRom("ROMs/Castlevania.nes");
 
-	/**** iNES mapper 003 games ****/
+	/**** iNES mapper 003 ****/
 	//cartridge->LoadRom("ROMs/Arkanoid.nes");
 
-	/**** iNES mapper 004 games ****/
+	/**** iNES mapper 004 ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble Part 2.nes");
 	//cartridge->LoadRom("ROMs/Double Dragon II.nes");
-	cartridge->LoadRom("ROMs/Super Mario Bros 3.nes");
+	//cartridge->LoadRom("ROMs/Super Mario Bros 2.nes");
+	//cartridge->LoadRom("ROMs/Super Mario Bros 3.nes");
+
+	/**** iNES mapper 007 ****/
+	//cartridge->LoadRom("ROMs/Battletoads.nes");
 
 	bus.InsertCartridge(cartridge);
 

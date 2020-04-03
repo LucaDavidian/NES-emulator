@@ -3,7 +3,7 @@
 #include "PPU.hpp"
 #include "APU.hpp"
 #include "cartridge.hpp"
-#include "controller.h"
+#include "controller.hpp"
 
 void Bus::Reset() 
 {
@@ -47,7 +47,7 @@ uint8_t Bus::Read(uint16_t address)
 
 void Bus::Write(uint16_t address, uint8_t data)
 {
-    if (address >= 0x0000U && address <= 0x1FFF)         // access RAM
+    if (address >= 0x0000 && address <= 0x1FFF)         // access RAM
         RAM[address & 0x07FF] = data;
     else if (address >= 0x2000 && address <= 0x3FFF)     // access PPU
         ppu->WriteRegister(address, data);

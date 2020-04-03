@@ -5,10 +5,12 @@
 #include "mapper002.hpp"
 #include "mapper003.hpp"
 #include "mapper004.hpp"
+#include "mapper007.hpp"
 #include <fstream>
 #include <exception>
 
 class BadFileException : public std::exception {};
+class BadMapperException : public std::exception {};
 
 void Cartridge::LoadRom(const std::string &ROMFilePath)
 {
@@ -75,8 +77,11 @@ void Cartridge::LoadRom(const std::string &ROMFilePath)
         case 4:                                                     // 2 * number of 16 KiB PRG banks -> number of 8 KiB PRG banks
             mapper = new Mapper004(nBanksPRG * 2, nBanksCHR * 8);   // 8 * number of 8 KiB CHR banks -> number of 1 KiB CHR banks
             break;
+        case 7:
+            mapper = new Mapper007(nBanksPRG / 2, nBanksCHR);       // number of 16 KiB PRG banks / 2 -> number of 32 KiB PRG banks
+            break;
         default:
-            // error
+            throw BadMapperException();
             break;
     }
 

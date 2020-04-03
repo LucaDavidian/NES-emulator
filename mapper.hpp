@@ -16,7 +16,7 @@ public:
     virtual uint32_t MapWritePRG(uint16_t address, uint8_t data, bool &toRAM) = 0;
 
     virtual uint32_t MapReadCHR(uint16_t address) = 0;
-    virtual uint32_t  MapWriteCHR(uint16_t address) = 0;
+    virtual uint32_t MapWriteCHR(uint16_t address) = 0;
 
     virtual MirroringMode GetMirroringMode() const = 0;
 protected:

@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H 
 
-#include "NES.h"
+#include "NES.hpp"
 
 class Game
 {

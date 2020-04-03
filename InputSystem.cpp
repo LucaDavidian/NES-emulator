@@ -1,5 +1,5 @@
 #include "InputSystem.h"
-#include "controller.h"
+#include "controller.hpp"
 
 InputSystem &InputSystem::GetInstance()
 {

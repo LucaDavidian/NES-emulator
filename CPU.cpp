@@ -25,6 +25,7 @@ CPU::CPU(Bus &bus) : instructionTable
     /* 0xF0 */  {"BEQ", &CPU::Addr_Relative, &CPU::BEQ, 2},   {"SBC", &CPU::Addr_IndirectIndexed, &CPU::SBC, 5},  {"INVALID", &CPU::Addr_Implied, &CPU::NOP, 2},  {"INVALID", &CPU::Addr_Implied, &CPU::NOP, 2},  {"INVALID", &CPU::Addr_Implied, &CPU::NOP, 2},      {"SBC", &CPU::Addr_ZeroPageIndexedX, &CPU::SBC, 4},  {"INC", &CPU::Addr_ZeroPageIndexedX, &CPU::INC, 6},  {"INVALID", &CPU::Addr_Implied, &CPU::NOP, 2},  {"SED", &CPU::Addr_Implied, &CPU::SED, 2},  {"SBC", &CPU::Addr_AbsoluteIndexedY, &CPU::SBC, 4},  {"INVALID", &CPU::Addr_Implied, &CPU::NOP, 2},  {"INVALID", &CPU::Addr_Implied, &CPU::NOP, 2},  {"INVALID", &CPU::Addr_Implied, &CPU::NOP, 2},       {"SBC", &CPU::Addr_AbsoluteIndexedX, &CPU::SBC, 4},  {"INC", &CPU::Addr_AbsoluteIndexedX, &CPU::INC, 7},  {"INVALID", &CPU::Addr_Implied, &CPU::NOP, 2},
     }, bus(bus)
 {
+
 }
 
 uint8_t CPU::Read(uint16_t address)
@@ -68,7 +69,7 @@ void CPU::Reset()
     uint8_t resetVectorL = Read(0xFFFC);
     uint8_t resetVectorH = Read(0xFFFD);
 
-    uint16_t resetVector = (uint16_t)resetVectorH << 8U | resetVectorL;
+    uint16_t resetVector = (uint16_t)resetVectorH << 8 | resetVectorL;
 
     // jump to reset vector
     PC = resetVector;
@@ -95,6 +96,8 @@ void CPU::NMIHandler()
 
     // jump to NMI vector
     PC = NMIVector;
+
+    currentInstructionCycles = 8;    // IRQ sequence 
 }
 
 void CPU::IRQHandler()
@@ -118,10 +121,12 @@ void CPU::IRQHandler()
     uint8_t IRQVectorL = Read(0xFFFE);
     uint8_t IRQVectorH = Read(0xFFFF);
 
-    uint16_t IRQVector = (uint16_t)IRQVectorH << 8U | IRQVectorL;
+    uint16_t IRQVector = (uint16_t)IRQVectorH << 8 | IRQVectorL;
 
     // jump to IRQ vector
     PC = IRQVector;
+
+    currentInstructionCycles = 7;    // IRQ sequence
 }
 
 bool CPU::InstructionComplete()
@@ -148,8 +153,8 @@ void CPU::Clock()
 
     if (IRQPending)
     {
-        //if (GetFlag(Flag::I))
-        //    return;
+        if (GetFlag(Flag::I))
+            return;
 
         IRQHandler();
         IRQPending = false;
@@ -1084,137 +1089,3 @@ void CPU::TYA()
     SetFlag(Flag::Z, A == 0x00);
 }
 
-std::map<uint16_t,std::string> CPU::Disassemble(int startAddress, int endAddress)
-{
-    std::map<uint16_t,std::string> assemblyCode;
-
-    int address = startAddress;
-
-    auto ToHexString = [](uint16_t num, uint8_t minDigits) -> std::string
-                       { 
-                            std::string hex;
-
-                            do
-                            {
-                                hex += "0123456789ABCDEF"[num % 16];
-                                minDigits--;
-                            }
-                            while (num /= 16);
-
-                            while (minDigits--)
-                                hex += '0';
-
-                            for (int i = 0, j = hex.size() - 1; i < j; i++, j--)
-                            {
-                                char temp = hex[i];
-                                hex[i] = hex[j];
-                                hex[j] = temp;
-                            }
-
-                            return hex;
-                       }; 
-
-    while (address <= endAddress)
-    {
-        std::string codeLine;
-
-        codeLine += "0x" + ToHexString(address, 4) + ": ";
-
-        uint8_t opcode = Read(address++);
-
-        Instruction instruction = instructionTable[opcode];
-
-        codeLine += instruction.name + " ";
-
-        if (instruction.addressingMode == &CPU::Addr_Accumulator)
-        {
-            codeLine += "{ACC}";
-        }
-        else if (instruction.addressingMode == &CPU::Addr_Implied)
-        {
-            codeLine += "{IMPL}";
-        }
-        else if (instruction.addressingMode == &CPU::Addr_Immediate)
-        {
-            codeLine += "0x" + ToHexString(Read(address), 2) + " ";
-            codeLine += "{IMM}";
-
-            address++;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_Absolute)
-        {
-            codeLine += "0x" + ToHexString(Read(address + 1), 2) + ToHexString(Read(address), 2) + " ";
-            codeLine += "{ABS}";
-            
-            address += 2;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_ZeroPage)
-        {
-            codeLine += "0x" + ToHexString(Read(address), 2) + " ";
-            codeLine += "{ZP}";
-
-            address++;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_Relative)
-        {
-            codeLine += std::to_string((int8_t)Read(address)) + " ";
-            codeLine += "{REL}";
-
-            address++;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_AbsoluteIndexedX)
-        {
-            codeLine += "0x" + ToHexString(Read(address + 1), 2) + ToHexString(Read(address), 2) + ", X ";
-            codeLine += "{ABX}";
-
-            address += 2;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_AbsoluteIndexedY)
-        {
-            codeLine += "0x" + ToHexString(Read(address + 1), 2) + ToHexString(Read(address), 2) + ", Y ";
-            codeLine += "{ABY}";
-
-            address += 2;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_ZeroPageIndexedX)
-        {
-            codeLine += "0x" + ToHexString(Read(address), 2) + ", X ";
-            codeLine += "{ZPX}";
-
-            address++;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_ZeroPageIndexedY)
-        {
-            codeLine += "0x" + ToHexString(Read(address), 2) + ", Y ";
-            codeLine += "{ZPY}";
-
-            address++;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_IndexedIndirect)
-        {
-            codeLine += "(0x" + ToHexString(Read(address), 2) +  ToHexString(Read(address), 2) + ", X) ";
-            codeLine += "{INX}";
-
-            address++;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_IndirectIndexed)
-        {
-            codeLine += "(0x" + ToHexString(Read(address), 2) +  ToHexString(Read(address), 2) + "), Y ";
-            codeLine += "{INY}";
-
-            address++;
-        }
-        else if (instruction.addressingMode == &CPU::Addr_AbsoluteIndirect)
-        {
-            codeLine += "(0x" + ToHexString(Read(address + 1), 2) + ToHexString(Read(address), 2) + ")  ";
-            codeLine += "{IND}";
-            
-            address += 2;
-        }
-
-        assemblyCode[startAddress] = codeLine;
-        startAddress = address;
-    }
-
-    return assemblyCode;
-}

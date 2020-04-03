@@ -402,16 +402,16 @@ void PPU::Clock()
 		;
 	else if (scanline == 261)                          // pre-render scanline
 	{
+		if (cycle == 1)
+		{
+			statusRegister.bits.verticalBlank = 0;     // vertical blanking period ended - clear the status bit
+			statusRegister.bits.spriteOverflow = 0;    // clear sprite overflow flag
+			statusRegister.bits.spriteZeroHit = 0;     // clear sprite 0 hit flag
+		}
+
 		/******************** background rendering ********************/
 		if (cycle >= 1 && cycle <= 256 || cycle >= 321 && cycle <= 336)
 		{
-			if (cycle == 1)
-			{
-				statusRegister.bits.verticalBlank = 0;     // vertical blanking period ended - clear the status bit
-				statusRegister.bits.spriteOverflow = 0;    // clear sprite overflow flag
-				statusRegister.bits.spriteZeroHit = 0;     // clear sprite 0 hit flag
-			}
-
 			ShiftBackgroundRegisters();
 
 			switch ((cycle - 1) % 8)
@@ -531,7 +531,7 @@ void PPU::Clock()
 		//	uint8_t garbage = secondaryOAM[0].y;
 	}
 	
-	// render pixel
+	// background pixel
 	uint8_t backgroundPixel = 0x00;
 	uint8_t backgroundPalette = 0x00;
 
@@ -550,6 +550,7 @@ void PPU::Clock()
 		}
 	}
 
+	// sprite pixel
 	uint8_t spritePixel = 0x00;
 	uint8_t spritePalette = 0x00;
 	uint8_t spritePriority = 0;
@@ -597,6 +598,10 @@ void PPU::Clock()
 	Color pixelColor = paletteColors[Read(0x3F00 + paletteIndex) & 0x3F];
 	screen->SetPixel(cycle - 1, scanline, pixelColor.red, pixelColor.green, pixelColor.blue);
 
+	if (maskRegister.bits.renderBackground || maskRegister.bits.renderSprites)
+		if (cycle == 260 && (scanline >= 0 && scanline <= 239 || scanline == 261))
+			cartridge->CountPPUScanline();
+
 	cycle++;                   // increment PPU cycle count
 
 	if (cycle == 341)          // 341 cycles in a scanline (0-- 340)
@@ -607,7 +612,7 @@ void PPU::Clock()
 		if (scanline == 262)   // 262 scanlines in a frame (0 - 261)
 		{
 			scanline = 0;
-			frameComplete = true;       //DisplayBackground();
+			frameComplete = true;     // DisplayBackground(1,1);
 		}
 	}
 }
@@ -822,12 +827,7 @@ void PPU::Write(uint16_t address, uint8_t data)
 	}
 }
 
-void PPU::DisplayPatternTable(uint8_t index)
-{
-
-}
-
-void PPU::DisplayBackground()
+void PPU::DisplayBackground(int a, int b)
 {
 	if (!maskRegister.bits.renderBackground)
 		return;
@@ -835,9 +835,9 @@ void PPU::DisplayBackground()
 	for (int y = 0; y < 30; y++)
 		for (int x = 0; x < 32; x++)
 		{
-			uint8_t tileID = Read((0x2000 | controlRegister.bits.baseNametableAddressY << 11 | controlRegister.bits.baseNametableAddressX << 10) + y * 32 + x);
+			uint8_t tileID = Read((0x2000 | a << 11 | b << 10) + y * 32 + x);
 			
-			uint8_t attribute = Read((0x2000 | controlRegister.bits.baseNametableAddressY << 11 | controlRegister.bits.baseNametableAddressX << 10) + 0x03C0 + y / 4 * 8 + x / 4);
+			uint8_t attribute = Read((0x2000 | a << 11 | b << 10) + 0x03C0 + y / 4 * 8 + x / 4);
 			if (x % 4 / 2)
 				attribute >>= 2;
 			if (y % 4 / 2)

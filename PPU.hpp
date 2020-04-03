@@ -16,8 +16,7 @@ public:
 
 	bool FrameComplete() { if (frameComplete) { frameComplete = false; return true; } else return false; }
 
-	void DisplayPatternTable(uint8_t index);
-	void DisplayBackground();
+	void DisplayBackground(int,int);
 
 	void Reset();
 	void Clock();
@@ -42,8 +41,7 @@ private:
 		uint8_t tileID;
 		uint8_t attribute;
 		uint8_t x;
-	};
-	Sprite OAM[64];            // 256 bytes internal OAM - object attribute memory (64 x 4-byte sprites)
+	} OAM[64];                 // 256 bytes internal OAM - object attribute memory (64 x 4-byte sprites)
 	Sprite secondaryOAM[8];    // 32 bytes internal secondary OAM (8 x 4-byte sprites)
 	Cartridge *cartridge;
 	Screen *screen;
