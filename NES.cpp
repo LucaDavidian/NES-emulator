@@ -40,7 +40,7 @@ void NES::Initialize()
 	//cartridge->LoadRom("ROMs/Castlevania II - Simon's Quest.nes");
 
 	/**** iNES mapper 002 ****/
-	//cartridge->LoadRom("ROMs/DuckTales.nes");
+	cartridge->LoadRom("ROMs/DuckTales.nes");
 	//cartridge->LoadRom("ROMs/DuckTales 2.nes");
 	//cartridge->LoadRom("ROMs/Castlevania.nes");
 
@@ -50,8 +50,9 @@ void NES::Initialize()
 	/**** iNES mapper 004 (MMC3) ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble Part 2.nes");
 	//cartridge->LoadRom("ROMs/Double Dragon II.nes");
-	cartridge->LoadRom("ROMs/Super Mario Bros 2.nes");
+	//cartridge->LoadRom("ROMs/Super Mario Bros 2.nes");
 	//cartridge->LoadRom("ROMs/Super Mario Bros 3.nes");
+	//cartridge->LoadRom("ROMs/Silver Surfer.nes");
 
 	/**** iNES mapper 007 ****/
 	//cartridge->LoadRom("ROMs/Battletoads.nes");
