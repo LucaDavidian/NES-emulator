@@ -7,11 +7,10 @@ void Mapper001::Reset()
     PRG_RAM_Enable = false;
 
     PRGBankMode = PRGBankMode::FIX_HIGH_BANK;
-    CHRBankMode = CHRBankMode::SWITCH_4KB;
+    CHRBankMode = CHRBankMode::SWITCH_4K;
 
     mappedPRGBank32 = 0;
-    mappedPRGBank16Low = 0;
-    mappedPRGBank16High = numBanksPRG - 1;
+    mappedPRGBank16 = 0;
 
     mappedCHRBank8 = 0;
     mappedCHRBank4Low = 0;
@@ -32,16 +31,21 @@ uint32_t Mapper001::MapReadPRG(uint16_t address, bool &fromRAM)
     else if (address >= 0x8000 && address <= 0xFFFF)
         switch (PRGBankMode)
         {
-        case PRGBankMode::SWITCH_32KB:
-            mappedAddress = mappedPRGBank32 * 0x8000 + (address & 0x7FFF);  // 0x8000 - 0xFFFF
-            break;
-        case PRGBankMode::FIX_LOW_BANK:
-        case PRGBankMode::FIX_HIGH_BANK:
-            if (address <= 0xBFFF)    // 0x8000 - 0xBFFF
-                mappedAddress = mappedPRGBank16Low * 0x4000 + (address & 0x3FFF);
-            else                      //  0xC000 - 0xFFFF
-                mappedAddress = mappedPRGBank16High * 0x4000 + (address & 0x3FFF);
-            break;
+            case PRGBankMode::SWITCH_32K:
+                mappedAddress = mappedPRGBank32 * 0x8000 + (address & 0x7FFF);  // 0x8000 - 0xFFFF
+                break;
+            case PRGBankMode::FIX_LOW_BANK:
+                if (address <= 0xBFFF)    // 0x8000 - 0xBFFF
+                    mappedAddress = 0 * 0x4000 + (address & 0x3FFF);
+                else                      //  0xC000 - 0xFFFF
+                    mappedAddress = mappedPRGBank16 * 0x4000 + (address & 0x3FFF);
+                break;
+            case PRGBankMode::FIX_HIGH_BANK:
+                if (address <= 0xBFFF)    // 0x8000 - 0xBFFF
+                    mappedAddress = mappedPRGBank16 * 0x4000 + (address & 0x3FFF);
+                else                      //  0xC000 - 0xFFFF
+                    mappedAddress = (numBanksPRG - 1) * 0x4000 + (address & 0x3FFF);
+                break;
         }
 
     return mappedAddress;
@@ -83,62 +87,50 @@ uint32_t Mapper001::MapWritePRG(uint16_t address, uint8_t data, bool &toRAM)
                 {
                     switch (internalRegister & 0x03)
                     {
-                    case 0:
-                        mirroringMode = MirroringMode::SINGLE_SCREEN_LOWER;
-                        break;
-                    case 1:
-                        mirroringMode = MirroringMode::SINGLE_SCREEN_UPPER;
-                        break;
-                    case 2:
-                        mirroringMode = MirroringMode::VERTICAL;
-                        break;
-                    case 3:
-                        mirroringMode = MirroringMode::HORIZONTAL;
-                        break;
+                       case 0:
+                            mirroringMode = MirroringMode::SINGLE_SCREEN_LOWER;
+                            break;
+                        case 1:
+                            mirroringMode = MirroringMode::SINGLE_SCREEN_UPPER;
+                            break;
+                        case 2:
+                            mirroringMode = MirroringMode::VERTICAL;
+                            break;
+                        case 3:
+                            mirroringMode = MirroringMode::HORIZONTAL;
+                            break;
                     }
 
                     switch ((internalRegister & 0x0C) >> 2)
                     {
-                    case 0:
-                    case 1:
-                        PRGBankMode = PRGBankMode::SWITCH_32KB;
-                        break;
-                    case 2:
-                        PRGBankMode = PRGBankMode::FIX_LOW_BANK;
-                        break;
-                    case 3:
-                        PRGBankMode = PRGBankMode::FIX_HIGH_BANK;
-                        break;
+                        case 0:
+                        case 1:
+                            PRGBankMode = PRGBankMode::SWITCH_32K;
+                            break;
+                        case 2:
+                            PRGBankMode = PRGBankMode::FIX_LOW_BANK;
+                            break;
+                        case 3:
+                            PRGBankMode = PRGBankMode::FIX_HIGH_BANK;
+                            break;
                     }
 
-                    CHRBankMode = internalRegister & 0x10 ? CHRBankMode::SWITCH_4KB : CHRBankMode::SWITCH_8KB;
+                    if (!(internalRegister & 0x10))
+                        CHRBankMode = CHRBankMode::SWITCH_8K;
+                    else
+                        CHRBankMode = CHRBankMode::SWITCH_4K;
                 }
                 else if (!(address & 0x4000) && (address & 0x2000))   // CHR bank 0: address 0xA000 - 0xBFFF, bit 14 == 0, bit 13 == 1
                 {
-                    if (CHRBankMode == CHRBankMode::SWITCH_8KB)
-                        mappedCHRBank8 = internalRegister & 0x1E;
-                    else if (CHRBankMode == CHRBankMode::SWITCH_4KB)
+                        mappedCHRBank8 = (internalRegister & 0x1E) >> 1;
                         mappedCHRBank4Low = internalRegister;
                 }
                 else if ((address & 0x4000) && !(address & 0x2000))   // CHR bank 1: address 0xC000 - 0xDFFF, bit 14 == 1, bit 13 == 0
-                {
-                    if (CHRBankMode == CHRBankMode::SWITCH_4KB)
                         mappedCHRBank4High = internalRegister;
-                }
-                else if ((address & 0x4000) && (address & 0x2000))    // PRG bank: address 0xE000 - 0xFFFF, bit 14 == 1, bit 13 == 1
+                else if ((address & 0x4000) && (address & 0x2000))    // PRG bank and RAM enable: address 0xE000 - 0xFFFF, bit 14 == 1, bit 13 == 1
                 {
-                    if (PRGBankMode == PRGBankMode::SWITCH_32KB)
-                        mappedPRGBank32 = internalRegister & 0x0E;
-                    else if (PRGBankMode == PRGBankMode::FIX_LOW_BANK)
-                    {
-                        mappedPRGBank16Low = 0;
-                        mappedPRGBank16High = internalRegister & 0x0F;
-                    }
-                    else if (PRGBankMode == PRGBankMode::FIX_HIGH_BANK)
-                    {
-                        mappedPRGBank16Low = internalRegister & 0x0F;
-                        mappedPRGBank16High = numBanksPRG - 1;
-                    }
+                    mappedPRGBank32 = internalRegister & 0x0E;
+                    mappedPRGBank16 = internalRegister & 0x0F;
 
                     PRG_RAM_Enable = !(internalRegister & 0x10);
                 }
@@ -153,12 +145,12 @@ uint32_t Mapper001::MapReadCHR(uint16_t address)
 {
     uint32_t mappedAddress = 0x00000000;
 
-    if (CHRBankMode == CHRBankMode::SWITCH_4KB)
+    if (CHRBankMode == CHRBankMode::SWITCH_4K)
         if (address <= 0x0FFF)                          // 0x0000 - 0x0FFF
             mappedAddress = mappedCHRBank4Low * 0x1000 + (address & 0x0FFF);
         else                                            // 0x1000 - 0x1FFF
             mappedAddress = mappedCHRBank4High * 0x1000 + (address & 0x0FFF);
-    else if (CHRBankMode == CHRBankMode::SWITCH_8KB)    // 0x0000 - 0x1FFF
+    else if (CHRBankMode == CHRBankMode::SWITCH_8K)     // 0x0000 - 0x1FFF
         mappedAddress = mappedCHRBank8 * 0x2000 + (address & 0x1FFF);
 
     return mappedAddress;
@@ -168,12 +160,12 @@ uint32_t Mapper001::MapWriteCHR(uint16_t address)
 {
     uint32_t mappedAddress = 0x00000000;
 
-    if (CHRBankMode == CHRBankMode::SWITCH_4KB)
+    if (CHRBankMode == CHRBankMode::SWITCH_4K)
         if (address <= 0x0FFF)                          // 0x0000 - 0x0FFF
             mappedAddress = mappedCHRBank4Low * 0x1000 + (address & 0x0FFF);
         else                                            // 0x1000 - 0x1FFF
             mappedAddress = mappedCHRBank4High * 0x1000 + (address & 0x0FFF);
-    else if (CHRBankMode == CHRBankMode::SWITCH_8KB)    // 0x0000 - 0x1FFF
+    else if (CHRBankMode == CHRBankMode::SWITCH_8K)    // 0x0000 - 0x1FFF
         mappedAddress = mappedCHRBank8 * 0x2000 + (address & 0x1FFF);
 
     return mappedAddress;

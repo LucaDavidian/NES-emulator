@@ -24,7 +24,7 @@ void NES::Initialize()
 	
 	//cartridge->LoadRom("ROMs/Ice Climber.nes");	
 	//cartridge->LoadRom("ROMs/Super Mario Bros.nes");
-	cartridge->LoadRom("ROMs/Donkey Kong.nes");
+	//cartridge->LoadRom("ROMs/Donkey Kong.nes");
 	//cartridge->LoadRom("ROMs/Donkey Kong 3.nes");
 	//cartridge->LoadRom("ROMs/Balloon Fight.nes");
 	//cartridge->LoadRom("ROMs/Burger Time.nes");
@@ -32,7 +32,7 @@ void NES::Initialize()
 	/**** iNES mapper 001 ****/
 	//cartridge->LoadRom("ROMs/Bubble Bobble.nes");
 	//cartridge->LoadRom("ROMs/The Legend of Zelda.nes");	
-	//cartridge->LoadRom("ROMs/Zelda II.nes");
+	cartridge->LoadRom("ROMs/Zelda II.nes");
 	//cartridge->LoadRom("ROMs/Tetris.nes");
 	//cartridge->LoadRom("ROMs/Darkwing Duck.nes");
 	//cartridge->LoadRom("ROMs/Double Dragon.nes");

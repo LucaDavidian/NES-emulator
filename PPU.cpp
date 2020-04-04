@@ -188,8 +188,6 @@ void PPU::ShiftBackgroundRegisters()
 
 void PPU::Clock()
 {
-	static uint8_t address12;
-
 	if (scanline >= 0 && scanline <= 239)              // visible frame
 	{
 		/**************** background rendering ********************/
@@ -237,8 +235,8 @@ void PPU::Clock()
 			spriteCountNextScanline = 0;
 			OAMEntry = 0;
 			allSpritesEvaluated = false;
-			spriteZeroOnScanline = spriteZeroNextScanline;
-			spriteZeroNextScanline = false;
+			spriteZeroOnScanline = spriteZeroOnNextScanline;
+			spriteZeroOnNextScanline = false;
 		}
 		else if (cycle >= 1 && cycle <= 256)
 		{
@@ -282,7 +280,7 @@ void PPU::Clock()
 								secondaryOAM[spriteCountNextScanline].x = OAM[OAMEntry].x;
 
 								if (OAMEntry == 0)
-									spriteZeroNextScanline = true;
+									spriteZeroOnNextScanline = true;
 
 								spriteCountNextScanline++;
 							}
@@ -353,7 +351,7 @@ void PPU::Clock()
 						spriteTileBaseAddress = patternTable * 0x1000 + (spriteTileID  << 4) + spriteTileY;
 					}
 					spriteShiftRegisterLow[cycle - 257 >> 3] = Read(spriteTileBaseAddress);
-					if (spriteAttribute[cycle - 257 >> 3] & 0x40)  // horizontal flip
+					if (spriteAttribute[cycle - 257 >> 3] & 0x40)      // horizontal flip
 					{
 						uint8_t flip = spriteShiftRegisterLow[cycle - 257 >> 3];
 
@@ -370,7 +368,7 @@ void PPU::Clock()
 				case 7:				
 					spriteXCounter[cycle - 257 >> 3] = secondaryOAM[cycle - 257 >> 3].x;	
 					spriteShiftRegisterHigh[cycle - 257 >> 3] = Read(spriteTileBaseAddress + 8);
-					if (spriteAttribute[cycle - 257 >> 3] & 0x40)  // horizontal flip
+					if (spriteAttribute[cycle - 257 >> 3] & 0x40)       // horizontal flip
 					{
 						uint8_t flip = spriteShiftRegisterHigh[cycle - 257 >> 3];
 
@@ -596,7 +594,8 @@ void PPU::Clock()
 			paletteIndex = backgroundPalette << 2 | backgroundPixel;
 
 	Color pixelColor = paletteColors[Read(0x3F00 + paletteIndex) & 0x3F];
-	screen->SetPixel(cycle - 1, scanline, pixelColor.red, pixelColor.green, pixelColor.blue);
+	if (scanline >= 0 && scanline <= 239 && cycle >= 1 && cycle <= 256)
+		screen->SetPixel(cycle - 1, scanline, pixelColor.red, pixelColor.green, pixelColor.blue);
 
 	if (maskRegister.bits.renderBackground || maskRegister.bits.renderSprites)
 		if (cycle == 260 && (scanline >= 0 && scanline <= 239 || scanline == 261))
@@ -612,7 +611,7 @@ void PPU::Clock()
 		if (scanline == 262)   // 262 scanlines in a frame (0 - 261)
 		{
 			scanline = 0;
-			frameComplete = true;     // DisplayBackground(1,1);
+			frameComplete = true;      //DisplayBackground(0,1);
 		}
 	}
 }

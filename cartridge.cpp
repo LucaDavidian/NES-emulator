@@ -66,7 +66,7 @@ void Cartridge::LoadRom(const std::string &ROMFilePath)
             mapper = new Mapper000(nBanksPRG, nBanksCHR);
             break;
         case 1:
-            mapper = new Mapper001(nBanksPRG, nBanksCHR);
+            mapper = new Mapper001(nBanksPRG, nBanksCHR * 2);       // 2 * number of 8 KiB CHR banks -> number of 4 KiB CHR banks
             break;
         case 2:
             mapper = new Mapper002(nBanksPRG, nBanksCHR);

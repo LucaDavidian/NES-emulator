@@ -22,14 +22,13 @@ private:
     uint8_t shiftRegister;
 
     MirroringMode mirroringMode;
-    enum class PRGBankMode { SWITCH_32KB, FIX_LOW_BANK, FIX_HIGH_BANK } PRGBankMode;
-    enum class CHRBankMode { SWITCH_8KB, SWITCH_4KB } CHRBankMode;
+    enum class PRGBankMode { SWITCH_32K, FIX_LOW_BANK, FIX_HIGH_BANK } PRGBankMode;
+    enum class CHRBankMode { SWITCH_8K, SWITCH_4K } CHRBankMode;
 
     bool PRG_RAM_Enable;
 
     uint8_t mappedPRGBank32;
-    uint8_t mappedPRGBank16Low;
-    uint8_t mappedPRGBank16High;
+    uint8_t mappedPRGBank16;
 
     uint8_t mappedCHRBank8;
     uint8_t mappedCHRBank4Low;

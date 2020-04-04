@@ -147,10 +147,10 @@ private:
 
 	/**** sprite rendering ****/	
 	uint8_t OAMEntry;                            // currently evaluated sprite - sprites are ordered by decreasing priority
-	uint8_t spriteCountNextScanline;                         // number of sprites in secondary OAM (max 8) 
-	uint8_t spriteCountScanline;                  // number of sprites to be rendered on current scanline (max 8)
+	uint8_t spriteCountNextScanline;             // number of sprites in secondary OAM (max 8) 
+	uint8_t spriteCountScanline;                 // number of sprites to be rendered on current scanline (max 8)
 	bool allSpritesEvaluated;
-	bool spriteZeroOnScanline, spriteZeroNextScanline;
+	bool spriteZeroOnScanline, spriteZeroOnNextScanline;
 
 	uint8_t spriteTileID;
 	uint8_t spriteY;
