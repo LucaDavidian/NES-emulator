@@ -1,0 +1,64 @@
+[1mdiff --git a/PPU.cpp b/PPU.cpp[m
+[1mindex 28c9370..3fb051b 100644[m
+[1m--- a/PPU.cpp[m
+[1m+++ b/PPU.cpp[m
+[36m@@ -233,10 +233,10 @@[m [mvoid PPU::Clock()[m
+ 		{[m
+ 			spriteCountScanline = spriteCountNextScanline;[m
+ 			spriteCountNextScanline = 0;[m
+[31m-			OAMEntry = 0;[m
+[31m-			allSpritesEvaluated = false;[m
+ 			spriteZeroOnScanline = spriteZeroOnNextScanline;[m
+ 			spriteZeroOnNextScanline = false;[m
+[32m+[m			[32mOAMEntry = 0;[m
+[32m+[m			[32mallSpritesEvaluated = false;[m
+ 		}[m
+ 		else if (cycle >= 1 && cycle <= 256)[m
+ 		{[m
+[36m@@ -379,7 +379,7 @@[m [mvoid PPU::Clock()[m
+ 						spriteShiftRegisterHigh[cycle - 257 >> 3] = flip;[m
+ 					}[m
+ 					break;[m
+[31m-			}		[m
+[32m+[m			[32m}[m
+ 		}[m
+ 		//else if (cycle >= 321 && cycle <= 340 || cycle == 0)[m
+ 		//	uint8_t garbage = secondaryOAM[0].y;[m
+[36m@@ -534,7 +534,6 @@[m [mvoid PPU::Clock()[m
+ 	uint8_t backgroundPalette = 0x00;[m
+ [m
+ 	if (maskRegister.bits.renderBackground)[m
+[31m-	{[m
+ 		if (maskRegister.bits.showBackgroundLeft || cycle > 8)[m
+ 		{[m
+ 			uint16_t pixelMask = 0x8000 >> fineX;[m
+[36m@@ -546,7 +545,6 @@[m [mvoid PPU::Clock()[m
+ 			backgroundPalette |= (attributeShiftRegisterLow & paletteMask) >> 7 - fineX;[m
+ 			backgroundPalette |= (attributeShiftRegisterHigh & paletteMask) >> 7 - fineX << 1;[m
+ 		}[m
+[31m-	}[m
+ [m
+ 	// sprite pixel[m
+ 	uint8_t spritePixel = 0x00;[m
+[36m@@ -554,11 +552,8 @@[m [mvoid PPU::Clock()[m
+ 	uint8_t spritePriority = 0;[m
+ 	[m
+ 	if (maskRegister.bits.renderSprites)[m
+[31m-	{[m
+ 		if (maskRegister.bits.showSpritesLeft || cycle > 8)[m
+[31m-		{[m
+ 			for (int i = 0; i < spriteCountScanline; i++)[m
+[31m-			{[m
+ 				if (spriteXCounter[i] == -1)[m
+ 				{[m
+ 					spritePixel |= (spriteShiftRegisterLow[i] & 0x80) >> 7;[m
+[36m@@ -577,9 +572,6 @@[m [mvoid PPU::Clock()[m
+ 						break;[m
+ 					}[m
+ 				}[m
+[31m-			}[m
+[31m-		}[m
+[31m-	}[m
+ [m
+ 	uint8_t paletteIndex = 0x00;   // if backgroundPalette and spritePalette are 0x00 pixel is transparent[m
+ 	[m

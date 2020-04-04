@@ -233,10 +233,10 @@ void PPU::Clock()
 		{
 			spriteCountScanline = spriteCountNextScanline;
 			spriteCountNextScanline = 0;
-			OAMEntry = 0;
-			allSpritesEvaluated = false;
 			spriteZeroOnScanline = spriteZeroOnNextScanline;
 			spriteZeroOnNextScanline = false;
+			OAMEntry = 0;
+			allSpritesEvaluated = false;
 		}
 		else if (cycle >= 1 && cycle <= 256)
 		{
@@ -379,7 +379,7 @@ void PPU::Clock()
 						spriteShiftRegisterHigh[cycle - 257 >> 3] = flip;
 					}
 					break;
-			}		
+			}
 		}
 		//else if (cycle >= 321 && cycle <= 340 || cycle == 0)
 		//	uint8_t garbage = secondaryOAM[0].y;
@@ -534,7 +534,6 @@ void PPU::Clock()
 	uint8_t backgroundPalette = 0x00;
 
 	if (maskRegister.bits.renderBackground)
-	{
 		if (maskRegister.bits.showBackgroundLeft || cycle > 8)
 		{
 			uint16_t pixelMask = 0x8000 >> fineX;
@@ -546,7 +545,6 @@ void PPU::Clock()
 			backgroundPalette |= (attributeShiftRegisterLow & paletteMask) >> 7 - fineX;
 			backgroundPalette |= (attributeShiftRegisterHigh & paletteMask) >> 7 - fineX << 1;
 		}
-	}
 
 	// sprite pixel
 	uint8_t spritePixel = 0x00;
@@ -554,11 +552,8 @@ void PPU::Clock()
 	uint8_t spritePriority = 0;
 	
 	if (maskRegister.bits.renderSprites)
-	{
 		if (maskRegister.bits.showSpritesLeft || cycle > 8)
-		{
 			for (int i = 0; i < spriteCountScanline; i++)
-			{
 				if (spriteXCounter[i] == -1)
 				{
 					spritePixel |= (spriteShiftRegisterLow[i] & 0x80) >> 7;
@@ -577,9 +572,6 @@ void PPU::Clock()
 						break;
 					}
 				}
-			}
-		}
-	}
 
 	uint8_t paletteIndex = 0x00;   // if backgroundPalette and spritePalette are 0x00 pixel is transparent
 	
