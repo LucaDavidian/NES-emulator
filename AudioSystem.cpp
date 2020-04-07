@@ -9,7 +9,7 @@ AudioSystem &AudioSystem::GetInstance()
 	return instance;
 }
 
-AudioSystem::AudioSystem()
+AudioSystem::AudioSystem() : callback(nullptr)
 {
 	SDL_AudioSpec audioDevice;
 	audioDevice.freq = 44100;                // sample rate 

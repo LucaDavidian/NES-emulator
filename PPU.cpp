@@ -99,6 +99,8 @@ void PPU::Reset()
 	attributeShiftRegisterHigh = 0x0000;
 
 	oamAddress = 0x00;
+
+	screen->Clear();
 }
 
 void PPU::IncrementAddressX()

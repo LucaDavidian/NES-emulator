@@ -8,59 +8,35 @@ InputSystem &InputSystem::GetInstance()
 	return instance;
 }
 
-void InputSystem::ProcessInput(SDL_Event *inputEvent)
+InputSystem::InputSystem()
 {
-	switch (inputEvent->type)
-	{
-		case SDL_KEYDOWN:
-			switch (inputEvent->key.keysym.sym)
-			{
-				case SDLK_q:
-					SDL_PushEvent(new SDL_Event{ SDL_QUIT });  // event copied to event queue (leak!)
-					break;
-				//case SDLK_w:
-				//	if (controller)
-				//		controller->PressButton(Controller::Button::UP);
-				//	break;
-				//case SDLK_s:
-				//	if (controller)
-				//		controller->PressButton(Controller::Button::DOWN);
-				//	break;
-				//case SDLK_a:
-				//	if (controller)
-				//		controller->PressButton(Controller::Button::LEFT);
-				//	break;
-				//case SDLK_d:
-				//	if (controller)
-				//		controller->PressButton(Controller::Button::RIGHT);
-				//	break;
-			}
-			break;
-		case SDL_KEYUP:
-			switch (inputEvent->key.keysym.sym)
-			{
-			//case SDLK_w:
-			//	if (controller)
-			//		controller->ReleaseButton(Controller::Button::UP);
-			//	break;
-			//case SDLK_s:
-			//	if (controller)
-			//		controller->ReleaseButton(Controller::Button::DOWN);
-			//	break;
-			//case SDLK_a:
-			//	if (controller)
-			//		controller->ReleaseButton(Controller::Button::LEFT);
-			//	break;
-			//case SDLK_d:
-			//	if (controller)
-			//		controller->ReleaseButton(Controller::Button::RIGHT);
-			//	break;
-			}
-			break;
-	}
+	for (int i = 0; i < 256; i++)
+		oldKeyboardState[i] = 0;
 }
 
-void InputSystem::PollInput()
+void InputSystem::PollKeyboard()
 {
+	// save old keyboard state
+	for (int i = 0; i < 256; i++)
+		oldKeyboardState[i] = keyboardState[i];
 
+	// poll current keyboard state
+	const uint8_t *newKeyboardState = SDL_GetKeyboardState(0);
+
+	for (int i = 0; i < 256; i++)
+		keyboardState[i] = newKeyboardState[i];
+}
+
+InputSystem::KeyState InputSystem::GetKeyState(SDL_Scancode key)
+{
+	if (keyboardState[key])
+		if (oldKeyboardState[key])
+			return KeyState::PRESSED;
+		else
+			return KeyState::JUST_PRESSED;
+	else
+		if (oldKeyboardState[key])
+			return KeyState::JUST_RELEASED;
+		else
+			return KeyState::RELEASED;
 }

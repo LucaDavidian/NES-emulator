@@ -12,6 +12,11 @@
 class BadFileException : public std::exception {};
 class BadMapperException : public std::exception {};
 
+Cartridge:: ~Cartridge()
+{ 
+    delete mapper; 
+}
+
 void Cartridge::LoadRom(const std::string &ROMFilePath)
 {
     std::ifstream ROMFile;

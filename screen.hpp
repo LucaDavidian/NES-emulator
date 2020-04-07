@@ -12,6 +12,7 @@ private:
 	static const std::size_t screenHeight = 240;
 public:
 	void SetPixel(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue);
+	void Clear();
 	
 	const uint8_t (&GetBuffer() const)[screenHeight][screenWidth][3] { return buffer; }
 

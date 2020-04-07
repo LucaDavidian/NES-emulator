@@ -3,8 +3,13 @@
 
 #include "NES.hpp"
 #include "../../../data structures/ADT/stack/stack.hpp"
+#include "../../../data structures/vector/vector.hpp"
+#include "SDL.h"
+#include <string>
 
 class Game;
+typedef struct _TTF_Font TTF_Font;
+struct SDL_Texture;
 
 /**** game states ****/
 class GameState
@@ -15,7 +20,7 @@ public:
 
 	virtual void Enter() = 0;
 	virtual void Exit() = 0;
-	virtual void GetInput() = 0;
+	virtual void ProcessInput() = 0;
 	virtual void UpdateState() = 0;
 	virtual void Render() = 0;
 };
@@ -24,36 +29,48 @@ class MenuGameState : public GameState
 {
 public:
 	MenuGameState() = default;
-	~MenuGameState() = default;
+	~MenuGameState();
 
-	void Enter() override {}
-	void Exit() override {}
-	void GetInput() override;
+	void Enter() override;
+	void Exit() override;
+	void ProcessInput() override;
 	void UpdateState() override;
 	void Render() override;
 private:
-
+	struct Texture
+	{
+		SDL_Texture *texture;
+		SDL_Rect textureRect;
+	};
+	Texture CreateTextTexture(TTF_Font *font, std::string const &text, SDL_Color color);
+	Vector<std::string> romNames;
+	Texture title;
+	Vector<Texture> romNameTextures;
+	Texture arrow;
+	Vector<Texture> infoPanel;
+	uint8_t selected = 0;
 };
 
 class PlayGameState : public GameState
 {
-friend class Game;
+	friend class Game;
 public:
-	PlayGameState() = default;
+	PlayGameState() : screenTexture(nullptr) {}
 	~PlayGameState() = default;
 
 	void Enter() override;
 	void Exit() override;
-	void GetInput() override;
+	void ProcessInput() override;
 	void UpdateState() override;
 	void Render() override;
 private:
-	static Game *game;
 	static void UpdateStateSyncWithAudio();
+	SDL_Texture *screenTexture;
 };
 
 class Game
 {
+friend class MenuGameState;
 friend class PlayGameState;
 public:
 	static Game &GetInstance();
@@ -66,15 +83,15 @@ private:
 	Game() = default;
 
 	void Loop();
-	void GetInput() { stateStack.Top()->GetInput(); }
+	void ProcessInput() { stateStack.Top()->ProcessInput(); }
 	void UpdateState() { stateStack.Top()->UpdateState(); }
 	void Render() { stateStack.Top()->Render(); }
 
 	NES nes;
 
 	/**** game FSM ****/
-	MenuGameState menuGameState;
-	PlayGameState playGameState;
+	static MenuGameState menuGameState;
+	static PlayGameState playGameState;
 
 	void ChangeState(GameState *state);
 	void PushState(GameState *state);

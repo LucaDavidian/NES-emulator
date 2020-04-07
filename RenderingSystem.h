@@ -11,11 +11,9 @@ public:
 
 	~RenderingSystem();
 
-	void Render(Screen &screen);
+	void Render();
 private:
 	RenderingSystem();
-
-	SDL_Texture *texture;
 };
 
 #endif  // RENDERING_SYSTEM_H

@@ -12,6 +12,8 @@ enum class MirroringMode { HARDWARE, HORIZONTAL, VERTICAL, SINGLE_SCREEN_LOWER, 
 class Cartridge
 {
 public:
+    ~Cartridge();
+
     void LoadRom(const std::string &ROMFilePath);
     
     uint8_t CPURead(uint16_t address);

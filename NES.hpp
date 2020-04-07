@@ -13,19 +13,21 @@ class NES
 {
 public:
 	NES();
-	void Initialize(); 
-	void Clock();
+	void Clock() { bus.Clock(); }
 	bool FrameComplete() { return ppu.FrameComplete(); }
 	Screen &GetScreen() { return screen; }
 	int16_t GetAudioSample() { return apu.GetAudioOutput(); }
+	void Reset() { bus.Reset(); }
+	void InsertCartridge(const char *name) { cartridge = new Cartridge; cartridge->LoadRom(name); bus.InsertCartridge(cartridge); }
+	void RemoveCartridge() { delete cartridge; }
 private:
 	Bus bus;
 	CPU cpu;
 	PPU ppu;
 	APU apu;
 	Screen screen;	
+	Controller controller;
 	Cartridge *cartridge;
-	Controller *controller;
 };
 
 #endif  // NES_H
