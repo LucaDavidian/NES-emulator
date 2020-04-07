@@ -240,11 +240,11 @@ void PPU::Clock()
 			OAMEntry = 0;
 			allSpritesEvaluated = false;
 		}
-		else if (cycle >= 1 && cycle <= 256)
+		else if (cycle >= 2 && cycle <= 256)
 		{
 			if (maskRegister.bits.renderSprites)
 				for (int i = 0; i < spriteCountScanline; i++)
-					if (spriteXCounter[i] + 1)  // visible pixels start at cycle 1
+					if (spriteXCounter[i] > 0)  
 						spriteXCounter[i]--;
 					else
 					{
@@ -556,7 +556,7 @@ void PPU::Clock()
 	if (maskRegister.bits.renderSprites)
 		if (maskRegister.bits.showSpritesLeft || cycle > 8)
 			for (int i = 0; i < spriteCountScanline; i++)
-				if (spriteXCounter[i] == -1)
+				if (spriteXCounter[i] == 0)
 				{
 					spritePixel |= (spriteShiftRegisterLow[i] & 0x80) >> 7;
 					spritePixel |= (spriteShiftRegisterHigh[i] & 0x80) >> 6;

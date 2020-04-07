@@ -160,7 +160,7 @@ private:
 	uint8_t spriteShiftRegisterLow[8];
 	uint8_t spriteShiftRegisterHigh[8];
 	uint8_t spriteAttribute[8];
-	int8_t spriteXCounter[8];
+	uint8_t spriteXCounter[8];
 };
 
 #endif  // PPU_H

@@ -245,7 +245,7 @@ void MenuGameState::ProcessInput()
 
 void MenuGameState::UpdateState()
 {
-	int row = 120;
+	int row = 110;
 
 	for (int i = 0; i < romNameTextures.Size(); i++)
 	{
